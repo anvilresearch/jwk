@@ -1,6 +1,8 @@
 # JWK _(@trust/jwk)_
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![Build Status](https://travis-ci.org/anvilresearch/jwk.svg?branch=master)](https://travis-ci.org/anvilresearch/jwk)
+[![codecov](https://codecov.io/gh/anvilresearch/jwk/branch/master/graph/badge.svg)](https://codecov.io/gh/anvilresearch/jwk)
 
 > JSON Web Key for Node.js and Browsers
 
