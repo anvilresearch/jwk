@@ -1,0 +1,51 @@
+{
+  "name": "@trust/jwk",
+  "version": "0.0.0",
+  "description": "JSON Web Key for JavaScript",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/_mocha test -w",
+    "jsdoc": "./node_modules/.bin/jsdoc -c jsdoc.json -r",
+    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin_mocha -- test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anvilresearch/jwk.git"
+  },
+  "keywords": [
+    "JWK",
+    "JOSE"
+  ],
+  "author": "MIT Connection Science",
+  "contributors": [
+    {
+      "name": "Christian Smith",
+      "email": "smith@anvil.io",
+      "url": "http://anvil.io"
+    },
+    {
+      "name": "Greg Linklater",
+      "email": "greg@gryphus.io",
+      "url": "https://github.com/EternalDeiwos"
+    },
+    {
+      "name": "Dmitri Zagidulin",
+      "url": "https://github.com/dmitrizagidulin"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anvilresearch/jwk/issues"
+  },
+  "homepage": "https://github.com/anvilresearch/jwk#readme",
+  "devDependencies": {
+    "chai": "^4.1.1",
+    "chai-as-promised": "^7.1.1",
+    "codecov": "^2.3.0",
+    "istanbul": "^0.4.5",
+    "jsdoc": "^3.5.4",
+    "mocha": "^3.5.0",
+    "sinon": "^2.1.0",
+    "sinon-chai": "^2.12.0"
+  }
+}
