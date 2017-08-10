@@ -72,20 +72,30 @@ class JWKSet {
   /**
    * filter
    *
-   * @param  {Function} fn - Filter function
+   * @param  {(Function|Object)} predicate - Filter function or predicate object
    * @return {Promise}
    */
-  filter (fn) {
+  filter (predicate) {
     return Promise.resolve(this)
   }
 
   /**
    * find
    *
-   * @param  {Function} fn - Find function
+   * @param  {(Function|Object)} predicate - Find function or predicate object
    * @return {Promise}
    */
-  find (fn) {
+  find (predicate) {
+    return Promise.resolve(this)
+  }
+
+  /**
+   * rotate
+   *
+   * @param  {(JWK|Array|Object|Function)} keys - jwk, array of jwks, filter predicate object or function.
+   * @return {Promise}
+   */
+  rotate (keys) {
     return Promise.resolve(this)
   }
 }
