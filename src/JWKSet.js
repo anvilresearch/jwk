@@ -80,10 +80,14 @@ class JWKSet {
 
     // Key descriptor object
     } else if (typeof data === 'object' && data !== null) {
-      let { alg } = data
+      let { alg, key_ops } = data
 
       if (!alg) {
         throw new DataError('Valid JWA algorithm required for generateKey')
+      }
+
+      if (!key_ops) {
+        data.key_ops = ['sign', 'verify']
       }
 
       cryptoKeyPromise = JWA.generateKey(alg, data)
@@ -95,31 +99,12 @@ class JWKSet {
 
     let privateCrypto, publicCrypto
     return cryptoKeyPromise
-      .then(({ privateKey, publicKey }) => {
-        privateCrypto = privateKey
-        publicCrypto = publicKey
-
-        return Promise.all([
-          JWA.exportKey('jwk', privateKey),
-          JWA.exportKey('jwk', publicKey)
-        ])
+      .then(({ privateKey, publicKey }) => [privateKey, publicKey])
+      .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(key))))
+      .then(keys => {
+        this.keys = this.keys.concat(keys)
+        return keys
       })
-      .then(([privateKey, publicKey]) => {
-        let privateJwk = new JWK(privateKey)
-        let publicJwk = new JWK(publicKey)
-
-        Object.defineProperty(privateJwk, 'cryptoKey', { value: privateCrypto, enumerable: false, configurable: false })
-        Object.defineProperty(publicJwk, 'cryptoKey', { value: publicCrypto, enumerable: false, configurable: false })
-
-        this.keys.push(privateJwk)
-        this.keys.push(publicJwk)
-
-        return {
-          privateKey: privateJwk,
-          publicKey: publicJwk
-        }
-      })
-      .catch(error => console.error('ERROR', error))
   }
 
   /**
@@ -129,7 +114,14 @@ class JWKSet {
    * @return {Promise}
    */
   importKeys (data) {
-    return Promise.resolve(this)
+    if (Array.isArray(data)) {
+      return Promise.all(data.map(item => this.importKeys(item)))
+    }
+
+    return JWK.importKey(data).then(jwk => {
+      this.keys.push(jwk)
+      return jwk
+    })
   }
 
   /**
@@ -139,7 +131,22 @@ class JWKSet {
    * @return {Promise}
    */
   filter (predicate) {
-    return Promise.resolve(this)
+    // Function predicate
+    if (typeof predicate === 'function') {
+      return this.keys.filter(predicate)
+
+    // Object
+    } else if (typeof predicate === 'object') {
+      return this.keys.filter(jwk => {
+        return Object.keys(predicate)
+          .map(key => jwk[key] === predicate[key])
+          .reduce((state, current) => state && current, true)
+      })
+
+    // Invalid input
+    } else {
+      return Promise.reject(new OperationError('Invalid predicate'))
+    }
   }
 
   /**
@@ -149,7 +156,22 @@ class JWKSet {
    * @return {Promise}
    */
   find (predicate) {
-    return Promise.resolve(this)
+    // Function predicate
+    if (typeof predicate === 'function') {
+      return this.keys.find(predicate)
+
+    // Object
+    } else if (typeof predicate === 'object') {
+      return this.keys.find(jwk => {
+        return Object.keys(predicate)
+          .map(key => jwk[key] === predicate[key])
+          .reduce((state, current) => state && current, true)
+      })
+
+    // Invalid input
+    } else {
+      return Promise.reject(new OperationError('Invalid predicate'))
+    }
   }
 
   /**
