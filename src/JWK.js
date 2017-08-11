@@ -29,6 +29,16 @@ class JWK {
       throw new DataError('Invalid JWK')
     }
 
+    // Handle string input
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data)
+      } catch (error) {
+        throw new DataError('Invalid JWK JSON String')
+      }
+    }
+
+    // Handle object input
     if (data.alg && options.alg && data.alg !== options.alg) {
       throw new DataError('Conflicting algorithm option')
 
@@ -45,12 +55,16 @@ class JWK {
   /**
    * importKey
    *
-   * @param  {(String|Object)} data
+   * @param  {(String|Object|Array)} data
    * @return {Promise}
    */
   static importKey (data, options = {}) {
+    if (Array.isArray(data)) {
+      return Promise.all(data.map(key => this.importKey(key)))
+    }
+
     return Promise.resolve()
-      .then(() => new JWK(data))
+      .then(() => new JWK(data, options))
       .then(jwk => {
         return JWA.importKey(jwk)
           .then(cryptoKey => {
@@ -62,6 +76,25 @@ class JWK {
 
             return jwk
           })
+      })
+  }
+
+  /**
+   * fromCryptoKey
+   *
+   * @param  {(CryptoKey|Array)} keys
+   * @return {Promise}
+   */
+  static fromCryptoKey (keys) {
+    if (Array.isArray(keys)) {
+      return Promise.all(keys.map(key => this.fromCryptoKey(key)))
+    }
+
+    return JWA.exportKey('jwk', keys)
+      .then(data => {
+        let jwk = new JWK(data)
+        Object.defineProperty(jwk, 'cryptoKey', { value: keys, enumerable: false, configurable: false })
+        return jwk
       })
   }
 
