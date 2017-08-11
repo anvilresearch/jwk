@@ -24,7 +24,7 @@ class JWK {
    * @class
    * JSON Web Key
    */
-  constructor (data) {
+  constructor (data, options = {}) {
     if (!data) {
       throw new DataError('Invalid JWK')
     }
