@@ -4,6 +4,7 @@
  * Dependencies
  * @ignore
  */
+const { JWA } = require('@trust/jwa')
 
 /**
  * Module Dependencies
