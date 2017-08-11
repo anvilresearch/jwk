@@ -55,14 +55,10 @@ class JWK {
   /**
    * importKey
    *
-   * @param  {(String|Object|Array)} data
+   * @param  {(String|Object)} data
    * @return {Promise}
    */
   static importKey (data, options = {}) {
-    if (Array.isArray(data)) {
-      return Promise.all(data.map(key => this.importKey(key)))
-    }
-
     return Promise.resolve()
       .then(() => new JWK(data, options))
       .then(jwk => {
@@ -82,18 +78,14 @@ class JWK {
   /**
    * fromCryptoKey
    *
-   * @param  {(CryptoKey|Array)} keys
+   * @param  {CryptoKey} key
    * @return {Promise}
    */
-  static fromCryptoKey (keys) {
-    if (Array.isArray(keys)) {
-      return Promise.all(keys.map(key => this.fromCryptoKey(key)))
-    }
-
-    return JWA.exportKey('jwk', keys)
+  static fromCryptoKey (key) {
+    return JWA.exportKey('jwk', key)
       .then(data => {
         let jwk = new JWK(data)
-        Object.defineProperty(jwk, 'cryptoKey', { value: keys, enumerable: false, configurable: false })
+        Object.defineProperty(jwk, 'cryptoKey', { value: key, enumerable: false, configurable: false })
         return jwk
       })
   }
