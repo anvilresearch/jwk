@@ -25,6 +25,13 @@ const { JWKSet, JWK } = require('../src')
  * Test Data
  * @ignore
  */
+const { RSAPrivateJWK, RSAPublicJWK } = require('./keys')
+const RSAKeyGenDescriptor = {
+  alg: 'RS256',
+  modulusLength: 1024, // low for testing
+  kid: 'abc',
+  key_ops: ['sign', 'verify']
+}
 
 /**
  * Tests
@@ -51,21 +58,17 @@ describe('JWKSet', () => {
       })
 
       it('should generate multiple keys', () => {
-        return JWKSet.generateKeys(['RS256', 'RS256']).then(jwks => {
+        return JWKSet.generateKeys([RSAKeyGenDescriptor, RSAKeyGenDescriptor]).then(jwks => {
           jwks.keys.length.should.equal(4)
           jwks.keys[3].should.be.instanceOf(JWK)
         })
       })
 
       it('should allow mixed input', () => {
-        return JWKSet.generateKeys(['RS256', { alg: 'RS256', modulusLength: 4096, kid: 'abc', key_ops: ['sign', 'verify'] }]).then(jwks => {
+        return JWKSet.generateKeys([RSAKeyGenDescriptor, 'RS256']).then(jwks => {
           jwks.keys.length.should.equal(4)
           jwks.keys[3].should.be.instanceOf(JWK)
         })
-      })
-
-      it('should require key_ops in object descriptors', () => {
-        return JWKSet.generateKeys({ alg: 'RS256' }).should.be.rejected
       })
     })
 
@@ -80,11 +83,57 @@ describe('JWKSet', () => {
         return jwks.generateKeys('RS256').should.be.fulfilled
       })
 
-      it('should return newly generatedKeys', () => {
+      it('should return newly generated keys', () => {
         return jwks.generateKeys(['RS256', 'RS256'])
           .then(generated => {
             generated.length.should.equal(2)
             jwks.keys.length.should.equal(4)
+          })
+      })
+    })
+  })
+
+  describe('importKeys', () => {
+
+    describe('static', () => {
+
+      it('should return a promise', () => {
+        return JWKSet.importKeys(RSAPublicJWK).should.be.fulfilled
+      })
+
+      it('should resolve a JWKSet', () => {
+        return JWKSet.importKeys(RSAPublicJWK).should.eventually.be.a.instanceOf(JWKSet)
+      })
+
+      it('should import keys', () => {
+        return JWKSet.importKeys(RSAPublicJWK).then(jwks => {
+          jwks.keys[0].should.be.instanceOf(JWK)
+        })
+      })
+
+      it('should import multiple keys', () => {
+        return JWKSet.importKeys([RSAPublicJWK, RSAPublicJWK]).then(jwks => {
+          jwks.keys[1].should.be.instanceOf(JWK)
+        })
+      })
+    })
+
+    describe('member', () => {
+      let jwks
+
+      beforeEach(() => {
+        jwks = new JWKSet()
+      })
+
+      it('should return a promise', () => {
+        return jwks.importKeys(RSAPublicJWK).should.be.fulfilled
+      })
+
+      it('should return newly imported keys', () => {
+        return jwks.importKeys([RSAPublicJWK, RSAPrivateJWK])
+          .then(imported => {
+            imported.length.should.equal(2)
+            jwks.keys.length.should.equal(2)
           })
       })
     })
