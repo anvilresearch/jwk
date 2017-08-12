@@ -114,8 +114,23 @@ class JWKSet {
    * @return {Promise}
    */
   importKeys (data) {
+    if (!data) {
+      return Promise.reject(new DataError('Invalid input'))
+    }
+
     if (Array.isArray(data)) {
       return Promise.all(data.map(item => this.importKeys(item)))
+    }
+
+    if (typeof data === 'object' && data !== null && data.keys) {
+      // Assign non-keys property to the JWKSet
+      let meta = Object.keys(data)
+        .filter(key => key !== 'keys')
+        .reduce((state, current) => state[current] = data[current], {})
+      Object.assign(this, meta)
+
+      // Import keys
+      return this.importKeys(data.keys)
     }
 
     return JWK.importKey(data).then(jwk => {
