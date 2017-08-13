@@ -112,6 +112,10 @@ class JWKSet {
    *
    * @param  {(String|Object|Array)} data
    * @return {Promise}
+   *
+   * @todo import from file
+   * @todo import from url
+   * @todo import encrypted JWKSet
    */
   importKeys (data) {
     if (!data) {
@@ -197,6 +201,18 @@ class JWKSet {
    */
   rotate (keys) {
     return Promise.resolve(this)
+  }
+
+  /**
+   * exportKeys
+   *
+   * @param  {JWK} [kek] - optional encryption key
+   * @return {String} JSON String
+   *
+   * @todo encryption
+   */
+  exportKeys (kek) {
+    return JSON.stringify(this, null, 2)
   }
 }
 
