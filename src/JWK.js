@@ -78,13 +78,14 @@ class JWK {
   /**
    * fromCryptoKey
    *
+   * @param  {String} alg
    * @param  {CryptoKey} key
    * @return {Promise}
    */
-  static fromCryptoKey (key) {
+  static fromCryptoKey (alg, key) {
     return JWA.exportKey('jwk', key)
       .then(data => {
-        let jwk = new JWK(data)
+        let jwk = new JWK(data, { alg })
         Object.defineProperty(jwk, 'cryptoKey', { value: key, enumerable: false, configurable: false })
         return jwk
       })
