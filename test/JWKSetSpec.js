@@ -43,15 +43,15 @@ describe('JWKSet', () => {
 
     describe('static', () => {
       it('should return a promise', () => {
-        return JWKSet.generateKeys('RS256').should.be.fulfilled
+        return JWKSet.generateKeys(RSAKeyGenDescriptor).should.be.fulfilled
       })
 
       it('should resolve a JWKSet', () => {
-        return JWKSet.generateKeys('RS256').should.eventually.be.a.instanceOf(JWKSet)
+        return JWKSet.generateKeys(RSAKeyGenDescriptor).should.eventually.be.a.instanceOf(JWKSet)
       })
 
       it('should generate and import', () => {
-        return JWKSet.generateKeys('RS256').then(jwks => {
+        return JWKSet.generateKeys(RSAKeyGenDescriptor).then(jwks => {
           jwks.keys.length.should.equal(2)
           jwks.keys[0].should.be.instanceOf(JWK)
         })
