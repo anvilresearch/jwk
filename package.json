@@ -49,6 +49,6 @@
     "sinon-chai": "^2.12.0"
   },
   "dependencies": {
-    "@trust/jwa": "git+https://github.com/anvilresearch/jwa.git"
+    "@trust/jwa": "^0.4.0"
   }
 }
