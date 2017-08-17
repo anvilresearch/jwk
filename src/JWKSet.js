@@ -5,6 +5,8 @@
  * @ignore
  */
 const { JWA } = require('@trust/jwa')
+const fetch = require('node-fetch')
+const fs = require('fs')
 
 /**
  * Module Dependencies
@@ -112,8 +114,6 @@ class JWKSet {
    * @param  {(String|Object|Array)} data
    * @return {Promise}
    *
-   * @todo import from file
-   * @todo import from url
    * @todo import encrypted JWKSet
    */
   importKeys (data) {
@@ -121,10 +121,36 @@ class JWKSet {
       return Promise.reject(new DataError('Invalid input'))
     }
 
+    // Import Array of JWKs
     if (Array.isArray(data)) {
       return Promise.all(data.map(item => this.importKeys(item)))
     }
 
+    if (typeof data === 'string') {
+      // Stringified JWK or JWKSet
+      if (data.startsWith('{') || data.startsWith('[')) {
+        return Promise.resolve()
+          .then(() => JSON.parse(data))
+          .then(parsed => this.importKeys(parsed))
+          .catch(error => Promise.reject(new DataError('Invalid JSON String')))
+
+      // Import from URL
+      } else if (data.startsWith('http')) {
+        return fetch(data)
+          .then(res => res.json())
+          .then(json => this.importKeys(json))
+          .catch(error => Promise.reject(new DataError(`Failed to fetch remote JWKSet ${data}`)))
+
+      // Import from File
+      } else {
+        return Promise.resolve()
+          .then(() => fs.readFileSync(data, 'utf8'))
+          .then(file => this.importKeys(file))
+          .catch(error => Promise.reject(new DataError(`Invalid file path ${data}`)))
+      }
+    }
+
+    // Import JWKSet Object
     if (typeof data === 'object' && data !== null && data.keys) {
       // Assign non-keys property to the JWKSet
       let meta = Object.keys(data)
