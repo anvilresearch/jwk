@@ -49,6 +49,6 @@
     "sinon-chai": "^2.12.0"
   },
   "dependencies": {
-    "@trust/jwa": "^0.4.0"
+    "@trust/jwa": "^0.4.1"
   }
 }
