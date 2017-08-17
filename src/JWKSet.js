@@ -70,7 +70,7 @@ class JWKSet {
    * @return {Promise}
    */
   generateKeys (data) {
-    let cryptoKeyPromise
+    let cryptoKeyPromise, alg
 
     // Array of objects/alg strings
     if (Array.isArray(data)) {
@@ -78,14 +78,16 @@ class JWKSet {
 
     // JWA alg string
     } else if (typeof data === 'string' && data !== '') {
-      cryptoKeyPromise = JWA.generateKey(data, { key_ops: ['sign', 'verify'], alg: data })
+      alg = data
+      cryptoKeyPromise = JWA.generateKey(alg, { key_ops: ['sign', 'verify'], alg })
 
     // Key descriptor object
     } else if (typeof data === 'object' && data !== null) {
-      let { alg, key_ops } = data
+      let { alg: algorithm, key_ops } = data
+      alg = algorithm
 
       if (!alg) {
-        throw new DataError('Valid JWA algorithm required for generateKey')
+        return Promise.reject(new DataError('Valid JWA algorithm required for generateKey'))
       }
 
       if (!key_ops) {
@@ -101,7 +103,7 @@ class JWKSet {
 
     return cryptoKeyPromise
       .then(({ privateKey, publicKey }) => [privateKey, publicKey])
-      .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(key))))
+      .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(alg, key))))
       .then(keys => {
         this.keys = this.keys.concat(keys)
         return keys
