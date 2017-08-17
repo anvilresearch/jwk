@@ -5,6 +5,7 @@
  * @ignore
  */
 const { RSAPrivateJWK, RSAPublicJWK } = require('./RSA')
+const { ECPrivateJWK, ECPublicJWK } = require('./EC')
 
 /**
  * Exports
@@ -12,5 +13,7 @@ const { RSAPrivateJWK, RSAPublicJWK } = require('./RSA')
  */
 module.exports = {
   RSAPrivateJWK,
-  RSAPublicJWK
+  RSAPublicJWK,
+  ECPrivateJWK,
+  ECPublicJWK,
 }
