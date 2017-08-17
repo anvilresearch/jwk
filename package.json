@@ -49,6 +49,7 @@
     "sinon-chai": "^2.12.0"
   },
   "dependencies": {
-    "@trust/jwa": "^0.4.1"
+    "@trust/jwa": "^0.4.1",
+    "node-fetch": "^1.7.2"
   }
 }
