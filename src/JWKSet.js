@@ -97,7 +97,6 @@ class JWKSet {
       return Promise.reject(new DataError('Invalid input'))
     }
 
-    let privateCrypto, publicCrypto
     return cryptoKeyPromise
       .then(({ privateKey, publicKey }) => [privateKey, publicKey])
       .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(key))))
@@ -150,13 +149,15 @@ class JWKSet {
    * @return {Promise}
    */
   filter (predicate) {
+    let { keys } = this
+
     // Function predicate
     if (typeof predicate === 'function') {
-      return this.keys.filter(predicate)
+      return keys.filter(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return this.keys.filter(jwk => {
+      return keys.filter(jwk => {
         return Object.keys(predicate)
           .map(key => jwk[key] === predicate[key])
           .reduce((state, current) => state && current, true)
@@ -175,13 +176,15 @@ class JWKSet {
    * @return {Promise}
    */
   find (predicate) {
+    let { keys } = this
+
     // Function predicate
     if (typeof predicate === 'function') {
-      return this.keys.find(predicate)
+      return keys.find(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return this.keys.find(jwk => {
+      return keys.find(jwk => {
         return Object.keys(predicate)
           .map(key => jwk[key] === predicate[key])
           .reduce((state, current) => state && current, true)
@@ -198,6 +201,8 @@ class JWKSet {
    *
    * @param  {(JWK|Array|Object|Function)} keys - jwk, array of jwks, filter predicate object or function.
    * @return {Promise}
+   *
+   * @todo rotate
    */
   rotate (keys) {
     return Promise.resolve(this)
