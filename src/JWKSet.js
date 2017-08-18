@@ -13,7 +13,7 @@ const fs = require('fs')
  * @ignore
  */
 const JWK = require('./JWK')
-const { DataError } = require('./errors')
+const { DataError, OperationError } = require('./errors')
 
 /**
  * JWKSet
@@ -184,15 +184,27 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return keys.filter(predicate)
+      return Promise.resolve()
+        .then(() => keys.filter(predicate))
 
     // Object
     } else if (typeof predicate === 'object') {
-      return keys.filter(jwk => {
-        return Object.keys(predicate)
-          .map(key => jwk[key] === predicate[key])
-          .reduce((state, current) => state && current, true)
-      })
+      return Promise.resolve()
+        .then(() => keys.filter(jwk => {
+          let result = Object.keys(predicate)
+            .map(key => {
+              let val = jwk[key]
+              let compare = predicate[key]
+
+              if (Array.isArray(val)) {
+                return val.includes(compare)
+              }
+
+              return jwk[key] === predicate[key]
+            })
+            .reduce((state, current) => state && current, true)
+          return result
+        }))
 
     // Invalid input
     } else {
@@ -211,15 +223,26 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return keys.find(predicate)
+      return Promise.resolve()
+        .then(() => keys.find(predicate))
 
     // Object
     } else if (typeof predicate === 'object') {
-      return keys.find(jwk => {
-        return Object.keys(predicate)
-          .map(key => jwk[key] === predicate[key])
-          .reduce((state, current) => state && current, true)
-      })
+      return Promise.resolve()
+        .then(() => keys.find(jwk => {
+          return Object.keys(predicate)
+            .map(key => {
+              let val = jwk[key]
+              let compare = predicate[key]
+
+              if (Array.isArray(val)) {
+                return val.includes(compare)
+              }
+
+              return jwk[key] === predicate[key]
+            })
+            .reduce((state, current) => state && current, true)
+        }))
 
     // Invalid input
     } else {
