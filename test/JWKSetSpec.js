@@ -26,6 +26,7 @@ const expect = chai.expect
  */
 const { JWA } = require('@trust/jwa')
 const { JWKSet, JWK } = require('../src')
+const { DataError, OperationError } = require('../src/errors')
 
 /**
  * Test Data
@@ -327,14 +328,120 @@ describe('JWKSet', () => {
   })
 
   describe('filter', () => {
+    let jwks
 
+    before(() => {
+      return JWKSet.importKeys([ECPrivateJWK, ECPublicJWK]).then(keys => jwks = keys)
+    })
+
+    it('should return a promise', () => {
+      return jwks.filter(() => false).should.be.fulfilled
+    })
+
+    it('should resolve an array', () => {
+      return jwks.filter(() => false).then(keys => expect(Array.isArray(keys)).to.be.true)
+    })
+
+    describe('with function predicate', () => {
+
+      it('should resolve an array of JWKs', () => {
+        return jwks.filter(key => key.key_ops.includes('sign')).then(keys => {
+          keys.length.should.equal(1)
+          keys[0].should.be.an.instanceOf(JWK)
+        })
+      })
+
+      it('should reject if the function throws', () => {
+        return jwks.filter(key => key.a.b.c).should.be.rejected
+      })
+    })
+
+    describe('with object predicate', () => {
+
+      it('should resolve an array of JWKs', () => {
+        return Promise.all([
+          jwks.filter({ key_ops: 'sign' }).then(keys => {
+            keys.length.should.equal(1)
+            keys[0].should.be.an.instanceOf(JWK)
+          }),
+          jwks.filter({ kty: 'EC' }).then(keys => {
+            keys.length.should.equal(2)
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        ])
+      })
+    })
+
+    describe('with invalid predicate', () => {
+
+      it('should reject', () => {
+        return jwks.filter('invalid').should.be.rejected
+      })
+    })
   })
 
   describe('find', () => {
+    let jwks
 
+    before(() => {
+      return JWKSet.importKeys([ECPrivateJWK, ECPublicJWK]).then(keys => jwks = keys)
+    })
+
+    it('should return a promise', () => {
+      return jwks.find(() => false).should.be.fulfilled
+    })
+
+    it('should resolve the first result', () => {
+      return jwks.find(() => true).then(jwk => expect(jwk).to.be.an.instanceOf(JWK))
+    })
+
+    it('should resolve undefined if no result is found', () => {
+      return jwks.find(() => false).then(keys => expect(keys).to.be.undefined)
+    })
+
+    describe('with function predicate', () => {
+
+      it('should return a JWK', () => {
+        return jwks.find(key => key.key_ops.includes('sign')).then(jwk => jwk.should.be.an.instanceOf(JWK))
+      })
+
+      it('should reject if the function throws', () => {
+        return jwks.find(key => key.a.b.c).should.be.rejected
+      })
+    })
+
+    describe('with object predicate', () => {
+
+      it('should resolve a JWK', () => {
+        return Promise.all([
+          jwks.find({ key_ops: 'sign' }).then(jwk => jwk.should.be.an.instanceOf(JWK)),
+          jwks.find({ kty: 'EC' }).then(jwk => jwk.should.be.an.instanceOf(JWK))
+        ])
+      })
+    })
+
+    describe('with invalid predicate', () => {
+
+      it('should reject', () => {
+        return jwks.find('invalid').should.be.rejected
+      })
+    })
+  })
+
+  describe('rotate', () => {
+    let jwks = new JWKSet()
+
+    // Placeholder test
+    it('should resolve the JWKSet', () => {
+      return jwks.rotate().should.eventually.be.an.instanceOf(JWKSet)
+    })
   })
 
   describe('exportKeys', () => {
+    let jwks = new JWKSet()
 
+    it('should return a string', () => {
+      return jwks.exportKeys().should.be.a('string')
+    })
   })
 })
