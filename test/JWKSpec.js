@@ -33,10 +33,16 @@ const { DataError, OperationError } = require('../src/errors')
  * @ignore
  */
 const { ECPrivateJWK, ECPublicJWK } = require('./keys')
+
 const ECPublicJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
 const InvalidJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
+
 const ECPublicJWKNoAlg = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoAlg.alg
+
+const plainTextData = 'data'
+const encryptedData = ''
+const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
 
 /**
  * Tests
@@ -92,11 +98,39 @@ describe('JWK', () => {
   })
 
   describe('sign', () => {
+    let jwk
 
+    before(() => {
+      return JWK.importKey(ECPrivateJWK).then(key => jwk = key)
+    })
+
+    it('should return a promise', () => {
+      return jwk.sign(plainTextData).should.be.fulfilled
+    })
+
+    it('should resolve a string', () => {
+      return jwk.sign(plainTextData).should.eventually.be.a('string')
+    })
   })
 
   describe('verify', () => {
+    let jwk
 
+    before(() => {
+      return JWK.importKey(ECPublicJWK).then(key => jwk = key)
+    })
+
+    it('should return a promise', () => {
+      return jwk.verify(plainTextData, signedData).should.be.fulfilled
+    })
+
+    it('should resolve a boolean', () => {
+      return jwk.verify(plainTextData, signedData).should.eventually.be.true
+    })
+
+    it('should fail to verify the signature with incorrect data', () => {
+      return jwk.verify(plainTextData + 'a', signedData).should.eventually.be.false
+    })
   })
 
   describe('encrypt', () => {
