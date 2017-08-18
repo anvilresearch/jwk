@@ -63,7 +63,7 @@ class JWK {
       .then(() => new JWK(data, options))
       .then(jwk => {
         return JWA.importKey(jwk)
-          .then(cryptoKey => {
+          .then(({ cryptoKey }) => {
             Object.defineProperty(jwk, 'cryptoKey', {
               value: cryptoKey,
               enumerable: false,
