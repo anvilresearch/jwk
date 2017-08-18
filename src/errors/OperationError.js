@@ -4,6 +4,10 @@
  * OperationError
  */
 class OperationError extends Error {
+
+  constructor (...args) {
+    super(...args)
+  }
 }
 
 /**
