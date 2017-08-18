@@ -4,6 +4,8 @@
  * Test dependencies
  * @ignore
  */
+const cwd = process.cwd()
+const path = require('path')
 const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const sinon = require('sinon')
@@ -206,6 +208,7 @@ describe('JWKSet', () => {
 
     describe('member', () => {
       let jwks
+      let meta = 'abc'
 
       beforeEach(() => {
         jwks = new JWKSet()
@@ -217,6 +220,108 @@ describe('JWKSet', () => {
 
       it('should reject on invalid input', () => {
         return jwks.importKeys(null).should.be.rejected
+      })
+
+      describe('with array input', () => {
+
+        it('should resolve an array of imported JWKs', () => {
+          return jwks.importKeys([ECPrivateJWK]).then(keys => {
+            keys.length.should.equal(1)
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        })
+
+        it('should resolve empty array with empty input', () => {
+          return jwks.importKeys([]).then(keys => {
+            keys.length.should.equal(0)
+          })
+        })
+
+        it('should reject with invalid input', () => {
+          return jwks.importKeys([null]).should.be.rejected
+        })
+
+        it('should reject if at least one array item is invalid input', () => {
+          return jwks.importKeys([ECPrivateJWK, null]).should.be.rejected
+        })
+      })
+
+      describe('with stringified JSON input', () => {
+
+        it('should resolve the imported JWK', () => {
+          return jwks.importKeys(JSON.stringify(ECPrivateJWK)).then(key => {
+            key.should.be.a.instanceOf(JWK)
+          })
+        })
+
+        it('should reject with invalid JSON input', () => {
+          return jwks.importKeys('{invalid').should.be.rejected
+        })
+
+        it('should reject with invalid JWK', () => {
+          return jwks.importKeys('{}').should.be.rejected
+        })
+
+        it('should accept a JSON array', () => {
+          return jwks.importKeys(JSON.stringify([ECPrivateJWK, ECPublicJWK])).then(keys => {
+            keys.length.should.equal(2)
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        })
+      })
+
+      describe('with jwks url input', () => {
+
+        it('should resolve the array of imported JWKs', () => {
+          return jwks.importKeys('https://www.googleapis.com/oauth2/v3/certs').then(keys => {
+            expect(Array.isArray(keys)).to.be.true
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        })
+
+        it('should reject with invalid url', () => {
+          return jwks.importKeys('http://localhost:4200/a/b/c').should.be.rejected
+        })
+      })
+
+      describe('with file path input', () => {
+
+        it('with JWK content should resolve the imported JWK', () => {
+          return jwks.importKeys(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json')).then(jwk => {
+            jwk.should.be.an.instanceOf(JWK)
+          })
+        })
+
+        it('with JWKSet content should resolve the array of imported JWKs', () => {
+          return jwks.importKeys(path.join(cwd, 'test', 'file_import', 'fileImportJWKSetTestData.json')).then(keys => {
+            keys.length.should.equal(1)
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        })
+
+        it('should reject with invalid file contents', () => {
+          return jwks.importKeys(path.join(cwd, 'test', 'file_import', 'fileImportInvalidTestData.json')).should.be.rejected
+        })
+
+        it('should reject with invalid file path', () => {
+          return jwks.importKeys('invalid').should.be.rejected
+        })
+      })
+
+      describe('with JWKSet object input', () => {
+
+        it('should resolve the array of imported JWKs', () => {
+          return jwks.importKeys({ keys: [ECPrivateJWK, ECPublicJWK] }).then(keys => {
+            keys.length.should.equal(2)
+            keys[0].should.be.an.instanceOf(JWK)
+          })
+        })
+
+        it('should retain non-standard metadata on the JWKSet', () => {
+          return jwks.importKeys({ meta, keys: [ECPrivateJWK, ECPublicJWK] }).then(() => {
+            jwks.meta.should.equal(meta)
+          })
+        })
       })
     })
   })
