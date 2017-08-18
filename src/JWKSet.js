@@ -79,6 +79,8 @@ class JWKSet {
     // JWA alg string
     } else if (typeof data === 'string' && data !== '') {
       alg = data
+
+      // TODO this should not default to ['sign', 'verify'] and causes problems for generateing symmetric keys
       cryptoKeyPromise = JWA.generateKey(alg, { key_ops: ['sign', 'verify'], alg })
 
     // Key descriptor object
