@@ -47,5 +47,9 @@
     "mocha": "^3.5.0",
     "sinon": "^2.1.0",
     "sinon-chai": "^2.12.0"
+  },
+  "dependencies": {
+    "@trust/jwa": "^0.4.3",
+    "node-fetch": "^1.7.2"
   }
 }
