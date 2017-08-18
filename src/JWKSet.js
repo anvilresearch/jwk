@@ -157,7 +157,10 @@ class JWKSet {
       // Assign non-keys property to the JWKSet
       let meta = Object.keys(data)
         .filter(key => key !== 'keys')
-        .reduce((state, current) => state[current] = data[current], {})
+        .reduce((state, current) => {
+          state[current] = data[current]
+          return state
+        }, {})
       Object.assign(this, meta)
 
       // Import keys
