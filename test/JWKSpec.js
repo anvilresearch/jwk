@@ -32,7 +32,7 @@ const { DataError, OperationError } = require('../src/errors')
  * Test Data
  * @ignore
  */
-const { ECPrivateJWK, ECPublicJWK } = require('./keys')
+const { ECPrivateJWK, ECPublicJWK, A256GCMJWK } = require('./keys')
 
 const ECPublicJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
 const InvalidJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
@@ -41,7 +41,7 @@ const ECPublicJWKNoAlg = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoAlg.alg
 
 const plainTextData = 'data'
-const encryptedData = ''
+const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
 
 /**
@@ -134,10 +134,40 @@ describe('JWK', () => {
   })
 
   describe('encrypt', () => {
+    let jwk
 
+    before(() => {
+      return JWK.importKey(A256GCMJWK).then(key => jwk = key)
+    })
+
+    it('should return a promise', () => {
+      return jwk.encrypt(plainTextData, Buffer.from('')).should.be.fulfilled
+    })
+
+    it('should resolve encrypted data', () => {
+      return jwk.encrypt(plainTextData, Buffer.from('')).then(data => {
+        data.should.haveOwnProperty('ciphertext')
+        data.should.haveOwnProperty('iv')
+        data.should.haveOwnProperty('tag')
+      })
+    })
   })
 
   describe('decrypt', () => {
+    let jwk
 
+    before(() => {
+      return JWK.importKey(A256GCMJWK).then(key => jwk = key)
+    })
+
+    it('should return a promise', () => {
+      let { ciphertext, iv, tag } = encryptedData
+      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.be.fulfilled
+    })
+
+    it('should resolve plain text data', () => {
+      let { ciphertext, iv, tag } = encryptedData
+      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.eventually.equal(plainTextData)
+    })
   })
 })
