@@ -49,6 +49,17 @@ class JWK {
       throw new DataError('Valid JWA algorithm required for JWK')
     }
 
+    // Handle kid transferral
+    if (data.kid && options.kid && data.kid !== options.kid) {
+      throw new DataError('Conflicting key identifier option')
+
+    } else if (!data.kid && options.kid) {
+      data.kid = options.kid
+
+    } else if (!data.kid && !options.kid) {
+      throw new DataError('Valid JWA key identifier required for JWK')
+    }
+
     Object.assign(this, data)
   }
 
@@ -78,14 +89,14 @@ class JWK {
   /**
    * fromCryptoKey
    *
-   * @param  {String} alg
    * @param  {CryptoKey} key
+   * @param  {Object} [options]
    * @return {Promise}
    */
-  static fromCryptoKey (alg, key) {
+  static fromCryptoKey (key, options) {
     return JWA.exportKey('jwk', key)
       .then(data => {
-        let jwk = new JWK(data, { alg })
+        let jwk = new JWK(data, options)
         Object.defineProperty(jwk, 'cryptoKey', { value: key, enumerable: false, configurable: false })
         return jwk
       })
