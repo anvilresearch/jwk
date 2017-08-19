@@ -6,6 +6,7 @@
  */
 const { JWA } = require('@trust/jwa')
 const fetch = require('node-fetch')
+const sift = require('sift')
 const fs = require('fs')
 
 /**
@@ -186,31 +187,15 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return Promise.resolve()
-        .then(() => keys.filter(predicate))
+      return keys.filter(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return Promise.resolve()
-        .then(() => keys.filter(jwk => {
-          let result = Object.keys(predicate)
-            .map(key => {
-              let val = jwk[key]
-              let compare = predicate[key]
-
-              if (Array.isArray(val)) {
-                return val.includes(compare)
-              }
-
-              return jwk[key] === predicate[key]
-            })
-            .reduce((state, current) => state && current, true)
-          return result
-        }))
+      return sift(predicate, keys)
 
     // Invalid input
     } else {
-      return Promise.reject(new OperationError('Invalid predicate'))
+      throw new OperationError('Invalid predicate')
     }
   }
 
@@ -225,30 +210,16 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return Promise.resolve()
-        .then(() => keys.find(predicate))
+      return keys.find(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return Promise.resolve()
-        .then(() => keys.find(jwk => {
-          return Object.keys(predicate)
-            .map(key => {
-              let val = jwk[key]
-              let compare = predicate[key]
-
-              if (Array.isArray(val)) {
-                return val.includes(compare)
-              }
-
-              return jwk[key] === predicate[key]
-            })
-            .reduce((state, current) => state && current, true)
-        }))
+      let sifter = sift(predicate)
+      return keys.find(sifter)
 
     // Invalid input
     } else {
-      return Promise.reject(new OperationError('Invalid predicate'))
+      throw new OperationError('Invalid predicate')
     }
   }
 
