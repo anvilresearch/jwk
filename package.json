@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@trust/jwa": "^0.4.3",
-    "node-fetch": "^1.7.2"
+    "node-fetch": "^1.7.2",
+    "sift": "^5.0.0"
   }
 }
