@@ -5,7 +5,9 @@
  * @ignore
  */
 const { JWA } = require('@trust/jwa')
+const crypto = require('@trust/webcrypto')
 const fetch = require('node-fetch')
+const sift = require('sift')
 const fs = require('fs')
 
 /**
@@ -14,6 +16,15 @@ const fs = require('fs')
  */
 const JWK = require('./JWK')
 const { DataError, OperationError } = require('./errors')
+
+/**
+ * Random KID Generator
+ */
+/* istanbul ignore */
+function random (byteLen) {
+  let value = crypto.getRandomValues(new Uint8Array(byteLen))
+  return Buffer.from(value).toString('hex')
+}
 
 /**
  * JWKSet
@@ -105,7 +116,10 @@ class JWKSet {
 
     return cryptoKeyPromise
       .then(({ privateKey, publicKey }) => [privateKey, publicKey])
-      .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(alg, key))))
+      .then(keys => {
+        let kid = random(8)
+        return Promise.all(keys.map(key => JWK.fromCryptoKey(key, { alg, kid })))
+      })
       .then(keys => {
         this.keys = this.keys.concat(keys)
         return keys
@@ -186,31 +200,15 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return Promise.resolve()
-        .then(() => keys.filter(predicate))
+      return keys.filter(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return Promise.resolve()
-        .then(() => keys.filter(jwk => {
-          let result = Object.keys(predicate)
-            .map(key => {
-              let val = jwk[key]
-              let compare = predicate[key]
-
-              if (Array.isArray(val)) {
-                return val.includes(compare)
-              }
-
-              return jwk[key] === predicate[key]
-            })
-            .reduce((state, current) => state && current, true)
-          return result
-        }))
+      return sift(predicate, keys)
 
     // Invalid input
     } else {
-      return Promise.reject(new OperationError('Invalid predicate'))
+      throw new OperationError('Invalid predicate')
     }
   }
 
@@ -225,30 +223,16 @@ class JWKSet {
 
     // Function predicate
     if (typeof predicate === 'function') {
-      return Promise.resolve()
-        .then(() => keys.find(predicate))
+      return keys.find(predicate)
 
     // Object
     } else if (typeof predicate === 'object') {
-      return Promise.resolve()
-        .then(() => keys.find(jwk => {
-          return Object.keys(predicate)
-            .map(key => {
-              let val = jwk[key]
-              let compare = predicate[key]
-
-              if (Array.isArray(val)) {
-                return val.includes(compare)
-              }
-
-              return jwk[key] === predicate[key]
-            })
-            .reduce((state, current) => state && current, true)
-        }))
+      let sifter = sift(predicate)
+      return keys.find(sifter)
 
     // Invalid input
     } else {
-      return Promise.reject(new OperationError('Invalid predicate'))
+      throw new OperationError('Invalid predicate')
     }
   }
 
@@ -273,7 +257,27 @@ class JWKSet {
    * @todo encryption
    */
   exportKeys (kek) {
-    return JSON.stringify(this, null, 2)
+    return JSON.stringify(this)
+  }
+
+  /**
+   * publicJwks
+   *
+   * @return {String} Publishable JSON JWKSet
+   *
+   * @todo memoise this
+   */
+  get publicJwks () {
+    let keys = this.filter(key => key.cryptoKey.type === 'public')
+    let metadata = Object.keys(this)
+      .filter(field => field !== 'keys')
+      .reduce((state, current) => {
+        state[current] = this[current]
+        return state
+      }, {})
+    let publish = Object.assign({}, metadata, { keys })
+
+    return JSON.stringify(publish, null, 2)
   }
 }
 
