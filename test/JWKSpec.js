@@ -40,6 +40,9 @@ const InvalidJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', '
 const ECPublicJWKNoAlg = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoAlg.alg
 
+const ECPublicJWKNoKid = Object.assign({}, ECPublicJWK)
+delete ECPublicJWKNoKid.kid
+
 const plainTextData = 'data'
 const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
@@ -79,7 +82,24 @@ describe('JWK', () => {
     })
 
     it('should throw if alg is not present on data or options', () => {
-      expect(() => new JWK(ECPublicJWKNoAlg, { alg: 'ES256' })).to.throw
+      expect(new JWK(ECPublicJWKNoAlg, { alg: 'ES256' })).to.throw
+    })
+
+    it('should throw if conflicting kid options are passed in', () => {
+      expect(() => new JWK(ECPublicJWK, { kid: '1' })).to.throw('Conflicting key identifier option')
+    })
+
+    it('should not throw if kid passed in twice but not conflicting', () => {
+      expect(() => new JWK(ECPublicJWK, { kid: '2' })).to.not.throw
+    })
+
+    it('should get kid from options if not on data', () => {
+      let jwk = new JWK(ECPublicJWK, { alg: 'ES256', kid: '2' })
+      jwk.kid.should.equal('2')
+    })
+
+    it('should throw if kid is not present on data or options', () => {
+      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid JWA key identifier required for JWK')
     })
 
     it('should copy non-standard key metadata', () => {
