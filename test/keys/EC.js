@@ -11,7 +11,8 @@ const ECPrivateJWK = {
   y: 'CmMhgetVMliOoukeVhXrYsNGxLDKuEnzlWio2LsDwug',
   key_ops: [ 'sign' ],
   ext: true,
-  alg: 'ES256'
+  alg: 'ES256',
+  kid: '2'
 }
 
 /**
@@ -24,7 +25,8 @@ const ECPublicJWK = {
   y: 'CmMhgetVMliOoukeVhXrYsNGxLDKuEnzlWio2LsDwug',
   key_ops: [ 'verify' ],
   ext: true,
-  alg: 'ES256'
+  alg: 'ES256',
+  kid: '2',
 }
 
 /**

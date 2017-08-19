@@ -8,7 +8,8 @@ const A256GCMJWK = {
   ext: true,
   k: '5hPNmHk7tTFZxLiBEmenM58ZF0dup1Z9YHmDhU26_t4',
   key_ops: ['encrypt','decrypt','wrapKey','unwrapKey'],
-  kty: 'oct'
+  kty: 'oct',
+  kid: '1'
 }
 
 /**
