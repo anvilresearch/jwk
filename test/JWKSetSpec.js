@@ -10,6 +10,7 @@ const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const sinon = require('sinon')
 const sinonChai = require('sinon-chai')
+const nock = require('nock')
 
 /**
  * Assertions
@@ -272,9 +273,16 @@ describe('JWKSet', () => {
       })
 
       describe('with jwks url input', () => {
+        let jwks_endpoint
+
+        before(() => {
+          jwks_endpoint = nock('http://idp.example.com')
+            .get('/jwks')
+            .reply(200, { keys: [ECPublicJWK] })
+        })
 
         it('should resolve the array of imported JWKs', () => {
-          return jwks.importKeys('https://www.googleapis.com/oauth2/v3/certs').then(keys => {
+          return jwks.importKeys('http://idp.example.com/jwks').then(keys => {
             expect(Array.isArray(keys)).to.be.true
             keys[0].should.be.an.instanceOf(JWK)
           })
