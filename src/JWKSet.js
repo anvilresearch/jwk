@@ -244,7 +244,27 @@ class JWKSet {
    * @todo encryption
    */
   exportKeys (kek) {
-    return JSON.stringify(this, null, 2)
+    return JSON.stringify(this)
+  }
+
+  /**
+   * publicJwks
+   *
+   * @return {String} Publishable JSON JWKSet
+   *
+   * @todo memoise this
+   */
+  get publicJwks () {
+    let keys = this.filter(key => key.cryptoKey.type === 'public')
+    let metadata = Object.keys(this)
+      .filter(field => field !== 'keys')
+      .reduce((state, current) => {
+        state[current] = this[current]
+        return state
+      }, {})
+    let publish = Object.assign({}, metadata, { keys })
+
+    return JSON.stringify(publish, null, 2)
   }
 }
 
