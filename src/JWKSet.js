@@ -5,6 +5,7 @@
  * @ignore
  */
 const { JWA } = require('@trust/jwa')
+const crypto = require('@trust/webcrypto')
 const fetch = require('node-fetch')
 const sift = require('sift')
 const fs = require('fs')
@@ -15,6 +16,15 @@ const fs = require('fs')
  */
 const JWK = require('./JWK')
 const { DataError, OperationError } = require('./errors')
+
+/**
+ * Random KID Generator
+ */
+/* istanbul ignore */
+function random (byteLen) {
+  let value = crypto.getRandomValues(new Uint8Array(byteLen))
+  return Buffer.from(value).toString('hex')
+}
 
 /**
  * JWKSet
@@ -106,7 +116,10 @@ class JWKSet {
 
     return cryptoKeyPromise
       .then(({ privateKey, publicKey }) => [privateKey, publicKey])
-      .then(keys => Promise.all(keys.map(key => JWK.fromCryptoKey(alg, key))))
+      .then(keys => {
+        let kid = random(8)
+        return Promise.all(keys.map(key => JWK.fromCryptoKey(key, { alg, kid })))
+      })
       .then(keys => {
         this.keys = this.keys.concat(keys)
         return keys
