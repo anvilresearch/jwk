@@ -24,7 +24,7 @@ class JWK {
    * @class JWK
    *
    * @description
-   * JSON Web Key
+   * JSON Web Key ([IETF RFC7517](https://tools.ietf.org/html/rfc7517))
    *
    * @param  {Object} data
    * @param  {Object} [options={}] - Additional JWK metadata.
@@ -131,7 +131,7 @@ class JWK {
    * @description
    * Sign arbitrary data using the JWK.
    *
-   * @example
+   * @example <caption>Signing the string "test"</caption>
    * privateJwk.sign('test').then(console.log)
    * // => "MEUCIQCHwnGM8IsOJgfQsoPgs3hMd8ahfWHM9ZNvj1K6i2yhKQIgWGOuXX43lSTo-U8Pa8sURR53lv6Osjw-dtoLselftqQ"
    *
@@ -149,7 +149,7 @@ class JWK {
    * @description
    * Verify a signature using the JWK.
    *
-   * @example
+   * @example <caption>Verify a signature of the string "test"</caption>
    * publicJwk.verify('test', 'MEUCIQCHwnGM8IsOJgfQsoPgs3hMd8ahfWHM9ZNvj1K6i2yhKQIgWGOuXX43lSTo-U8Pa8sURR53lv6Osjw-dtoLselftqQ').then(console.log)
    * // => true
    *
@@ -168,7 +168,7 @@ class JWK {
    * @description
    * Encrypt arbitrary data using the JWK.
    *
-   * @example
+   * @example <caption>Encrypt the string "data"</caption>
    * secretJwk.encrypt('data').then(console.log)
    * // => { iv: 'u0l3ttqUFDQ8mcRboHv5Vw', ciphertext: 'yq3K4w', tag: 'fHlZ__uuUnHn0ac-Lnrr-A' }
    *
@@ -187,7 +187,7 @@ class JWK {
    * @description
    * Decrypt data using the JWK.
    *
-   * @example
+   * @example <caption>Decrypt encrypted string "test"</caption>
    * secretJwk.decrypt('yq3K4w', 'u0l3ttqUFDQ8mcRboHv5Vw', 'fHlZ__uuUnHn0ac-Lnrr-A').then(console.log)
    * // => "data"
    *
