@@ -259,7 +259,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line417">line 417</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line525">line 525</a>
     </li></ul></dd>
     
 
@@ -401,7 +401,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line85">line 85</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -454,26 +454,50 @@
     
         <p class="code-caption">Simple RSA keypair</p>
     
-    <pre class="prettyprint"><code>JWKSet.generateKeys('RS256').then(console.log)
-// => { keys: [{ ..., d: '...', kty: 'RSA', alg: 'RS256', kid: 'abcd' },
+    <pre class="prettyprint"><code>JWKSet.generateKeys('RS256')
+  .then(console.log)
+// => { keys: [
+//      { ..., d: '...', kty: 'RSA', alg: 'RS256', kid: 'abcd' },
 //      { ..., kty: 'RSA', alg: 'RS256', kid: 'abcd' }] }</code></pre>
 
         <p class="code-caption">Multiple keypairs</p>
     
-    <pre class="prettyprint"><code>JWKSet.generateKeys(['RS256', 'ES256']).then(console.log)
-// => { keys: [{ ..., kty: 'RSA', alg: 'RS256' }, { ..., kty: 'RSA', alg: 'RS256' },
-//      { ..., kty: 'EC', alg: 'ES256' }, { ..., kty: 'EC', alg: 'ES256' }] }</code></pre>
+    <pre class="prettyprint"><code>JWKSet.generateKeys(['RS256', 'ES256'])
+  .then(console.log)
+// => { keys: [
+//      { ..., kty: 'RSA', alg: 'RS256' },
+//      { ..., kty: 'RSA', alg: 'RS256' },
+//      { ..., kty: 'EC', alg: 'ES256' },
+//      { ..., kty: 'EC', alg: 'ES256' }] }</code></pre>
 
         <p class="code-caption">Object descriptor RSA keypair</p>
     
-    <pre class="prettyprint"><code>JWKSet.generateKeys({ alg: 'RS256', kid: 'custom', modulusLength: 1024 }).then(console.log)
-// => { keys: [{ ..., alg: 'RS256', kid: 'custom' }, { ..., alg: 'RS256', kid: 'custom' }] }</code></pre>
+    <pre class="prettyprint"><code>let keyDescriptor = {
+  alg: 'RS256',
+  kid: 'custom',
+  modulusLength: 1024
+}
+
+JWKSet.generateKeys(keyDescriptor)
+  .then(console.log)
+// => { keys: [
+//      { ..., alg: 'RS256', kid: 'custom' },
+//      { ..., alg: 'RS256', kid: 'custom' }] }</code></pre>
 
         <p class="code-caption">Mixed input, multiple keypairs</p>
     
-    <pre class="prettyprint"><code>JWKSet.generateKeys([{ alg: 'RS512', modulusLength: 1024 }, 'ES256']).then(console.log)
-// => { keys: [{ ..., kty: 'RSA', alg: 'RS512' }, { ..., kty: 'RSA', alg: 'RS512' },
-//      { ..., kty: 'EC', alg: 'ES256' }, { ..., kty: 'EC', alg: 'ES256' }] }</code></pre>
+    <pre class="prettyprint"><code>let keyDescriptor = {
+  alg: 'RS512',
+  modulusLength: 1024
+}
+
+JWKSet.generateKeys([keyDescriptor, 'ES256'])
+  .then(console.log)
+// => { keys: [
+//      { ..., kty: 'RSA', alg: 'RS512' },
+//      { ..., kty: 'RSA', alg: 'RS512' },
+//      { ..., kty: 'EC', alg: 'ES256' },
+//      { ..., kty: 'EC', alg: 'ES256' }] }</code></pre>
 
 
 
@@ -590,7 +614,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line133">line 133</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line179">line 179</a>
     </li></ul></dd>
     
 
@@ -643,42 +667,64 @@
     
         <p class="code-caption">Import keys from JSON string</p>
     
-    <pre class="prettyprint"><code>JWKSet.importKeys('{"meta":"abcd","keys":[...]}').then(console.log)
+    <pre class="prettyprint"><code>let jsonJwkSet = '{"meta":"abcd","keys":[...]}'
+
+JWKSet.importKeys(jsonJwkSet).then(console.log)
 // => { meta: 'abcd', keys: [...] }</code></pre>
 
         <p class="code-caption">Import keys from object</p>
     
-    <pre class="prettyprint"><code>JWKSet.importKeys({ meta: 'abcd', keys: [...] }).then(console.log)
+    <pre class="prettyprint"><code>let jwkSet = {
+  meta: 'abcd',
+  keys: [...]
+}
+
+JWKSet.importKeys(jwkSet)
+  .then(console.log)
 // => { meta: 'abcd', keys: [...] }</code></pre>
 
         <p class="code-caption">Import keys from URL</p>
     
-    <pre class="prettyprint"><code>JWKSet.importKeys('https://idp.example.com/jwks').then(console.log)
+    <pre class="prettyprint"><code>let jwkSetUrl = 'https://idp.example.com/jwks'
+
+JWKSet.importKeys(jwkSetUrl)
+  .then(console.log)
 //
 // HTTP/1.1 200 OK
 // Content-Type: application/json
 //
 // {"meta":"abcd","keys":[...]}
 //
-// => { meta: 'abcd', keys: [...] }</code></pre>
+// => { meta: 'abcd',
+//      keys: [...] }</code></pre>
 
         <p class="code-caption">Import keys from file path</p>
     
-    <pre class="prettyprint"><code>JWKSet.importKeys('./path/to/my/file.json').then(console.log)
+    <pre class="prettyprint"><code>let jwkSetPath = './path/to/my/file.json'
+
+JWKSet.importKeys(jwkSetPath)
+  .then(console.log)
 //
 // Contents of ./path/to/my/file.json -
 // {"meta":"abcd","keys":[...]}
 //
-// => { meta: 'abcd', keys: [...] }</code></pre>
+// => { meta: 'abcd',
+//      keys: [...] }</code></pre>
 
         <p class="code-caption">Mixed input, multiple sources</p>
     
-    <pre class="prettyprint"><code>JWKSet.importKeys([{ meta: 'abcd', keys: [...] }, './path/to/my/file.json']).then(console.log)
+    <pre class="prettyprint"><code>let jwkSetPath = './path/to/my/file.json'
+let jwkSet = { meta: 'abcd', keys: [...] }
+
+JWKSet.importKeys([jwkSet, jwkSetPath])
+  .then(console.log)
 //
 // Contents of ./path/to/my/file.json -
 // {"other":"efgh","keys":[...]}
 //
-// => { meta: 'abcd', other: 'efgh', keys: [...] }</code></pre>
+// => { meta: 'abcd',
+//      other: 'efgh',
+//      keys: [...] }</code></pre>
 
 
 
@@ -801,7 +847,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line403">line 403</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line511">line 511</a>
     </li></ul></dd>
     
 
@@ -968,7 +1014,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line327">line 327</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line431">line 431</a>
     </li></ul></dd>
     
 
@@ -1021,13 +1067,18 @@
     
         <p class="code-caption">Function predicate</p>
     
-    <pre class="prettyprint"><code>let filtered = jwks.filter(key => key.key_ops.includes('sign'))
-// => [{ ..., key_ops: ['sign'] }]</code></pre>
+    <pre class="prettyprint"><code>let predicate = key => key.key_ops.includes('sign')
+
+let filtered = jwks.filter(predicate)
+// => [ { ..., key_ops: ['sign'] } ]</code></pre>
 
         <p class="code-caption">MongoDB-like object predicate (see <a href="https://github.com/crcn/sift.js">Sift</a>)</p>
     
-    <pre class="prettyprint"><code>let filtered = jwks.filter({ key_ops: { $in: ['sign', 'verify'] } })
-// => [{ ..., key_ops: ['sign'] }, { ..., key_ops: ['verify'] }]</code></pre>
+    <pre class="prettyprint"><code>let predicate = { key_ops: { $in: ['sign', 'verify'] } }
+
+let filtered = jwks.filter(predicate)
+// => [ { ..., key_ops: ['sign'] },
+//      { ..., key_ops: ['verify'] } ]</code></pre>
 
 
 
@@ -1141,7 +1192,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line361">line 361</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line469">line 469</a>
     </li></ul></dd>
     
 
@@ -1194,12 +1245,16 @@
     
         <p class="code-caption">Function predicate</p>
     
-    <pre class="prettyprint"><code>let filtered = jwks.find(key => key.key_ops.includes('sign'))
+    <pre class="prettyprint"><code>let predicate = key => key.key_ops.includes('sign')
+
+let filtered = jwks.find(predicate)
 // => { ..., key_ops: ['sign'] }</code></pre>
 
         <p class="code-caption">MongoDB-like object predicate (see <a href="https://github.com/crcn/sift.js">Sift</a>)</p>
     
-    <pre class="prettyprint"><code>let filtered = jwks.find({ key_ops: { $in: ['sign', 'verify'] } })
+    <pre class="prettyprint"><code>let predicate = { key_ops: { $in: ['sign', 'verify'] } }
+
+let filtered = jwks.find()
 // => { ..., key_ops: ['sign'] }</code></pre>
 
 
@@ -1317,7 +1372,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line163">line 163</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line236">line 236</a>
     </li></ul></dd>
     
 
@@ -1370,23 +1425,50 @@
     
         <p class="code-caption">Simple RSA keypair</p>
     
-    <pre class="prettyprint"><code>jwks.generateKeys('RS256').then(console.log)
-// => [{ kty: 'RSA' }, { kty: 'RSA' }]</code></pre>
+    <pre class="prettyprint"><code>jwks.generateKeys('RS256')
+  .then(console.log)
+// => [
+//      { kty: 'RSA' },
+//      { kty: 'RSA' }
+//    ]</code></pre>
 
         <p class="code-caption">Multiple keypairs</p>
     
     <pre class="prettyprint"><code>jwks.generateKeys(['RS256', 'ES256']).then(console.log)
-// => [[{ kty: 'RSA' }, { kty: 'RSA' }], [{ kty: 'EC' }, { kty: 'EC' }]]</code></pre>
+// => [
+//      [ { kty: 'RSA' },
+//        { kty: 'RSA' } ],
+//      [ { kty: 'EC' },
+//        { kty: 'EC' } ] ]</code></pre>
 
         <p class="code-caption">Object descriptor RSA keypair</p>
     
-    <pre class="prettyprint"><code>jwks.generateKeys({ alg: 'RS256', kid: 'custom', modulusLength: 1024 }).then(console.log)
-// => [{ kty: 'RSA', kid: 'custom' }, { kty: 'RSA', kid: 'custom' }]</code></pre>
+    <pre class="prettyprint"><code>let keyDescriptor = {
+  alg: 'RS256',
+  kid: 'custom',
+  modulusLength: 1024
+}
+
+jwks.generateKeys(keyDescriptor)
+  .then(console.log)
+// => [ { kty: 'RSA', kid: 'custom' },
+//      { kty: 'RSA', kid: 'custom' } ]</code></pre>
 
         <p class="code-caption">Mixed input, multiple keypairs</p>
     
-    <pre class="prettyprint"><code>jwks.generateKeys([{ alg: 'RS512', modulusLength: 1024 }, 'ES256']).then(console.log)
-// => [[{ kty: 'RSA' }, { kty: 'RSA' }], [{ kty: 'EC' }, { kty: 'EC' }]]</code></pre>
+    <pre class="prettyprint"><code>let keyDescriptor = {
+  alg: 'RS512',
+  modulusLength: 1024
+}
+
+jwks.generateKeys([keyDescriptor, 'ES256'])
+  .then(console.log)
+// => [
+//      [ { kty: 'RSA' },
+//        { kty: 'RSA' } ],
+//      [ { kty: 'EC' },
+//        { kty: 'EC' } ]
+//    ]</code></pre>
 
 
 
@@ -1546,7 +1628,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line255">line 255</a>
+        <a href="JWKSet.js.html">JWKSet.js</a>, <a href="JWKSet.js.html#line354">line 354</a>
     </li></ul></dd>
     
 
@@ -1606,42 +1688,68 @@
     
         <p class="code-caption">Import keys from JSON string</p>
     
-    <pre class="prettyprint"><code>jwks.importKeys('{"meta":"abcd","keys":[...]}').then(console.log)
-// => [{...}, {...}]</code></pre>
+    <pre class="prettyprint"><code>let jsonJwkSet = '{"meta":"abcd","keys":[...]}'
+
+jwks.importKeys(jsonJwkSet)
+  .then(console.log)
+// => [ {...},
+//      {...} ]</code></pre>
 
         <p class="code-caption">Import keys from object</p>
     
-    <pre class="prettyprint"><code>jwks.importKeys({ meta: 'abcd', keys: [...] }).then(console.log)
-// => [{...}, {...}]</code></pre>
+    <pre class="prettyprint"><code>let jwkSet = {
+  meta: 'abcd',
+  keys: [...]
+}
+
+jwks.importKeys(jwkSet)
+  .then(console.log)
+// => [ {...},
+//      {...} ]</code></pre>
 
         <p class="code-caption">Import keys from URL</p>
     
-    <pre class="prettyprint"><code>jwks.importKeys('https://idp.example.com/jwks').then(console.log)
+    <pre class="prettyprint"><code>let jwkSetUrl = 'https://idp.example.com/jwks'
+
+jwks.importKeys(jwkSetUrl)
+  .then(console.log)
 //
 // HTTP/1.1 200 OK
 // Content-Type: application/json
 //
 // {"meta":"abcd","keys":[...]}
 //
-// => [{...}, {...}]</code></pre>
+// => [ {...},
+//      {...} ]</code></pre>
 
         <p class="code-caption">Import keys from file path</p>
     
-    <pre class="prettyprint"><code>jwks.importKeys('./path/to/my/file.json').then(console.log)
+    <pre class="prettyprint"><code>let jwkSetPath = './path/to/my/file.json'
+
+jwks.importKeys(jwkSetPath)
+  .then(console.log)
 //
 // Contents of ./path/to/my/file.json -
 // {"meta":"abcd","keys":[...]}
 //
-// => [{...}, {...}]</code></pre>
+// => [ {...},
+//      {...} ]</code></pre>
 
         <p class="code-caption">Mixed input, multiple sources</p>
     
-    <pre class="prettyprint"><code>jwks.importKeys([{ meta: 'abcd', keys: [...] }, './path/to/my/file.json']).then(console.log)
+    <pre class="prettyprint"><code>let jwkSetPath = './path/to/my/file.json'
+let jwkSet = { meta: 'abcd', keys: [...] }
+
+jwks.importKeys([jwkSet, jwkSetPath])
+  .then(console.log)
 //
 // Contents of ./path/to/my/file.json -
 // {"other":"efgh","keys":[...]}
 //
-// => [{...}, {...}, {...}, {...}]</code></pre>
+// => [ {...},
+//      {...},
+//      {...},
+//      {...} ]</code></pre>
 
 
 
@@ -1667,7 +1775,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.4</a> on Sun Aug 20 2017 17:04:25 GMT+0200 (SAST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.4</a> on Sun Aug 20 2017 22:43:30 GMT+0200 (SAST)
 </footer>
 
 <script> prettyPrint(); </script>
