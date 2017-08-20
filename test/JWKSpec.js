@@ -69,7 +69,7 @@ describe('JWK', () => {
     })
 
     it('should throw if conflicting alg options are passed in', () => {
-      expect(() => new JWK(ECPublicJWK, { alg: 'KS256' })).to.throw('Conflicting algorithm option')
+      expect(() => new JWK(ECPublicJWK, { alg: 'KS256' })).to.throw('Conflicting \'alg\' option')
     })
 
     it('should not throw if alg passed in twice but not conflicting', () => {
@@ -82,11 +82,11 @@ describe('JWK', () => {
     })
 
     it('should throw if alg is not present on data or options', () => {
-      expect(new JWK(ECPublicJWKNoAlg, { alg: 'ES256' })).to.throw
+      expect(() => new JWK(ECPublicJWKNoAlg, {})).to.throw('Valid \'alg\' required for JWK')
     })
 
     it('should throw if conflicting kid options are passed in', () => {
-      expect(() => new JWK(ECPublicJWK, { kid: '1' })).to.throw('Conflicting key identifier option')
+      expect(() => new JWK(ECPublicJWK, { kid: '1' })).to.throw('Conflicting \'kid\' option')
     })
 
     it('should not throw if kid passed in twice but not conflicting', () => {
@@ -99,7 +99,7 @@ describe('JWK', () => {
     })
 
     it('should throw if kid is not present on data or options', () => {
-      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid JWA key identifier required for JWK')
+      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid \'kid\' required for JWK')
     })
 
     it('should copy non-standard key metadata', () => {
