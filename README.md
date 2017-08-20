@@ -71,24 +71,29 @@ $ npm run karma   // Karma (browser)
 
 ## API
 
+Full documentation available [here](https://anvilresearch.github.io/jwk).
+
 ### JWK
 
-#### new JWK()
-#### (static) importKey()
-#### sign()
-#### verify()
-#### encrypt()
-#### decrypt()
+#### new JWK(data, [options])
+#### (static) importKey(data, [options]) => Promise.<JWK>
+#### (static) fromCryptoKey(data, [options]) => Promise.<JWK>
+#### sign(data) => Promise.<String>
+#### verify(data, signature) => Promise.<Boolean>
+#### encrypt(data, aad) => Promise.<Object>
+#### decrypt(ciphertext, iv, tag, aad) => Promise.<String>
 
 ### JWKSet
 
-#### new JWKSet()
-#### (static) generateKeys()
-#### (static) importKeys()
-#### generateKeys()
-#### importKeys()
-#### filter()
-#### find()
+#### new JWKSet([data])
+#### (static) generateKeys(data) => Promise.<JWKSet>
+#### (static) importKeys(data) => Promise.<JWKSet>
+#### get publicJwks => String
+#### generateKeys(data) => Promise.<Array.<Array.<JWK>>|<Array.<JWK>>
+#### importKeys(data) => Promise.<Array.<JWK>>
+#### filter(predicate) => Array.<JWK>
+#### find(predicate) => JWK
+#### exportKeys(kek) => Promise.<String>
 
 ## Contribute
 
