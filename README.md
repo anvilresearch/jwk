@@ -18,6 +18,7 @@ available natively in browsers and [via npm][node-webcrypto] in Node.js.
 [jwkset]: https://tools.ietf.org/html/rfc7517#section-5
 [w3c-webcrypto]: https://www.w3.org/TR/WebCryptoAPI/
 [node-webcrypto]: https://www.npmjs.com/package/@trust/webcrypto
+[api-docs]: https://anvilresearch.github.io/jwk
 
 
 ## Table of Contents
@@ -71,29 +72,11 @@ $ npm run karma   // Karma (browser)
 
 ## API
 
-Full documentation available [here](https://anvilresearch.github.io/jwk).
+Full documentation available [here][api-docs].
 
-### JWK
+### Examples
 
-#### new JWK(data, [options])
-#### (static) importKey(data, [options]) => Promise.<JWK>
-#### (static) fromCryptoKey(data, [options]) => Promise.<JWK>
-#### sign(data) => Promise.<String>
-#### verify(data, signature) => Promise.<Boolean>
-#### encrypt(data, aad) => Promise.<Object>
-#### decrypt(ciphertext, iv, tag, aad) => Promise.<String>
-
-### JWKSet
-
-#### new JWKSet([data])
-#### (static) generateKeys(data) => Promise.<JWKSet>
-#### (static) importKeys(data) => Promise.<JWKSet>
-#### get publicJwks => String
-#### generateKeys(data) => Promise.<Array.<Array.<JWK>>|<Array.<JWK>>
-#### importKeys(data) => Promise.<Array.<JWK>>
-#### filter(predicate) => Array.<JWK>
-#### find(predicate) => JWK
-#### exportKeys(kek) => Promise.<String>
+TBD
 
 ## Contribute
 
