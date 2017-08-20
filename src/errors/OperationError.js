@@ -2,6 +2,7 @@
 
 /**
  * OperationError
+ * @ignore
  */
 class OperationError extends Error {
 
