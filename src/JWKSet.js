@@ -19,8 +19,8 @@ const { DataError, OperationError } = require('./errors')
 
 /**
  * Random KID Generator
+ * @ignore
  */
-/* istanbul ignore */
 function random (byteLen) {
   let value = crypto.getRandomValues(new Uint8Array(byteLen))
   return Buffer.from(value).toString('hex')
@@ -35,10 +35,12 @@ class JWKSet {
   /**
    * constructor
    *
-   * @class
-   * JWKSet
+   * @class JWKSet
    *
-   * @param  {(Object|Array)} data
+   * @description
+   * JSON Web Key Set ([IETF RFC7517 Section 5.](https://tools.ietf.org/html/rfc7517#section-5))
+   *
+   * @param  {(Object|Array)} [data]
    */
   constructor (data = {}) {
     if (Array.isArray(data)) {
@@ -55,8 +57,30 @@ class JWKSet {
   /**
    * generateKeys
    *
+   * @description
+   * Instantiate a new JWKSet and generate one or many JWK keypairs and secret keys.
+   *
+   * @example <caption>Simple RSA keypair</caption>
+   * JWKSet.generateKeys('RS256').then(console.log)
+   * // => { keys: [{ ..., d: '...', kty: 'RSA', alg: 'RS256', kid: 'abcd' },
+   * //      { ..., kty: 'RSA', alg: 'RS256', kid: 'abcd' }] }
+   *
+   * @example <caption>Multiple keypairs</caption>
+   * JWKSet.generateKeys(['RS256', 'ES256']).then(console.log)
+   * // => { keys: [{ ..., kty: 'RSA', alg: 'RS256' }, { ..., kty: 'RSA', alg: 'RS256' },
+   * //      { ..., kty: 'EC', alg: 'ES256' }, { ..., kty: 'EC', alg: 'ES256' }] }
+   *
+   * @example <caption>Object descriptor RSA keypair</caption>
+   * JWKSet.generateKeys({ alg: 'RS256', kid: 'custom', modulusLength: 1024 }).then(console.log)
+   * // => { keys: [{ ..., alg: 'RS256', kid: 'custom' }, { ..., alg: 'RS256', kid: 'custom' }] }
+   *
+   * @example <caption>Mixed input, multiple keypairs</caption>
+   * JWKSet.generateKeys([{ alg: 'RS512', modulusLength: 1024 }, 'ES256']).then(console.log)
+   * // => { keys: [{ ..., kty: 'RSA', alg: 'RS512' }, { ..., kty: 'RSA', alg: 'RS512' },
+   * //      { ..., kty: 'EC', alg: 'ES256' }, { ..., kty: 'EC', alg: 'ES256' }] }
+   *
    * @param  {(String|Object|Array)} data
-   * @return {Promise}
+   * @return {Promise.<JWKSet>} A promise that resolves a new JWKSet containing the generated key pairs.
    */
   static generateKeys (data) {
     return Promise.resolve(new JWKSet())
@@ -66,8 +90,45 @@ class JWKSet {
   /**
    * importKeys
    *
+   * @description
+   * Instantiate a new JWKSet and import keys from JSON string, JS object, remote URL or file path.
+   *
+   * @example <caption>Import keys from JSON string</caption>
+   * JWKSet.importKeys('{"meta":"abcd","keys":[...]}').then(console.log)
+   * // => { meta: 'abcd', keys: [...] }
+   *
+   * @example <caption>Import keys from object</caption>
+   * JWKSet.importKeys({ meta: 'abcd', keys: [...] }).then(console.log)
+   * // => { meta: 'abcd', keys: [...] }
+   *
+   * @example <caption>Import keys from URL</caption>
+   * JWKSet.importKeys('https://idp.example.com/jwks').then(console.log)
+   * //
+   * // HTTP/1.1 200 OK
+   * // Content-Type: application/json
+   * //
+   * // {"meta":"abcd","keys":[...]}
+   * //
+   * // => { meta: 'abcd', keys: [...] }
+   *
+   * @example <caption>Import keys from file path</caption>
+   * JWKSet.importKeys('./path/to/my/file.json').then(console.log)
+   * //
+   * // Contents of ./path/to/my/file.json -
+   * // {"meta":"abcd","keys":[...]}
+   * //
+   * // => { meta: 'abcd', keys: [...] }
+   *
+   * @example <caption>Mixed input, multiple sources</caption>
+   * JWKSet.importKeys([{ meta: 'abcd', keys: [...] }, './path/to/my/file.json']).then(console.log)
+   * //
+   * // Contents of ./path/to/my/file.json -
+   * // {"other":"efgh","keys":[...]}
+   * //
+   * // => { meta: 'abcd', other: 'efgh', keys: [...] }
+   *
    * @param  {(String|Object|Array)} data
-   * @return {Promise}
+   * @return {Promise.<JWKSet>} A promise that resolves a new JWKSet containing the generated key pairs.
    */
   static importKeys (data) {
     return Promise.resolve(new JWKSet())
@@ -77,8 +138,27 @@ class JWKSet {
   /**
    * generateKeys
    *
+   * @description
+   * Generate additional keys and include them in the JWKSet.
+   *
+   * @example <caption>Simple RSA keypair</caption>
+   * jwks.generateKeys('RS256').then(console.log)
+   * // => [{ kty: 'RSA' }, { kty: 'RSA' }]
+   *
+   * @example <caption>Multiple keypairs</caption>
+   * jwks.generateKeys(['RS256', 'ES256']).then(console.log)
+   * // => [[{ kty: 'RSA' }, { kty: 'RSA' }], [{ kty: 'EC' }, { kty: 'EC' }]]
+   *
+   * @example <caption>Object descriptor RSA keypair</caption>
+   * jwks.generateKeys({ alg: 'RS256', kid: 'custom', modulusLength: 1024 }).then(console.log)
+   * // => [{ kty: 'RSA', kid: 'custom' }, { kty: 'RSA', kid: 'custom' }]
+   *
+   * @example <caption>Mixed input, multiple keypairs</caption>
+   * jwks.generateKeys([{ alg: 'RS512', modulusLength: 1024 }, 'ES256']).then(console.log)
+   * // => [[{ kty: 'RSA' }, { kty: 'RSA' }], [{ kty: 'EC' }, { kty: 'EC' }]]
+   *
    * @param  {(String|Object|Array)} data
-   * @return {Promise}
+   * @return {Promise.<Array.<JWK>, Array.<Array.<JWK>>>} A promise that resolves the newly generated key pairs after they are added to the JWKSet instance.
    */
   generateKeys (data) {
     let cryptoKeyPromise, alg
@@ -129,10 +209,48 @@ class JWKSet {
   /**
    * importKeys
    *
-   * @param  {(String|Object|Array)} data
-   * @return {Promise}
+   * @description
+   * Import additional keys and include them in the JWKSet.
    *
-   * @todo import encrypted JWKSet
+   * @example <caption>Import keys from JSON string</caption>
+   * jwks.importKeys('{"meta":"abcd","keys":[...]}').then(console.log)
+   * // => [{...}, {...}]
+   *
+   * @example <caption>Import keys from object</caption>
+   * jwks.importKeys({ meta: 'abcd', keys: [...] }).then(console.log)
+   * // => [{...}, {...}]
+   *
+   * @example <caption>Import keys from URL</caption>
+   * jwks.importKeys('https://idp.example.com/jwks').then(console.log)
+   * //
+   * // HTTP/1.1 200 OK
+   * // Content-Type: application/json
+   * //
+   * // {"meta":"abcd","keys":[...]}
+   * //
+   * // => [{...}, {...}]
+   *
+   * @example <caption>Import keys from file path</caption>
+   * jwks.importKeys('./path/to/my/file.json').then(console.log)
+   * //
+   * // Contents of ./path/to/my/file.json -
+   * // {"meta":"abcd","keys":[...]}
+   * //
+   * // => [{...}, {...}]
+   *
+   * @example <caption>Mixed input, multiple sources</caption>
+   * jwks.importKeys([{ meta: 'abcd', keys: [...] }, './path/to/my/file.json']).then(console.log)
+   * //
+   * // Contents of ./path/to/my/file.json -
+   * // {"other":"efgh","keys":[...]}
+   * //
+   * // => [{...}, {...}, {...}, {...}]
+   *
+   * @param  {(String|Object|Array)} data
+   * @param  {JWK} [kek] - Key encryption key.
+   * @return {Promise.<Array.<JWK>>} A promise that resolves the newly imported key pairs after they are added to the JWKSet instance.
+   *
+   * @todo Import encrypted JWKSet
    */
   importKeys (data) {
     if (!data) {
@@ -192,8 +310,19 @@ class JWKSet {
   /**
    * filter
    *
+   * @description
+   * Execute a filter query on the JWKSet keys.
+   *
+   * @example <caption>Function predicate</caption>
+   * let filtered = jwks.filter(key => key.key_ops.includes('sign'))
+   * // => [{ ..., key_ops: ['sign'] }]
+   *
+   * @example <caption>MongoDB-like object predicate (see [Sift]{@link https://github.com/crcn/sift.js})</caption>
+   * let filtered = jwks.filter({ key_ops: { $in: ['sign', 'verify'] } })
+   * // => [{ ..., key_ops: ['sign'] }, { ..., key_ops: ['verify'] }]
+   *
    * @param  {(Function|Object)} predicate - Filter function or predicate object
-   * @return {Promise}
+   * @return {Array.<JWK>} An array of JWKs matching the filter predicate.
    */
   filter (predicate) {
     let { keys } = this
@@ -215,8 +344,19 @@ class JWKSet {
   /**
    * find
    *
+   * @description
+   * Execute a find query on the JWKSet keys.
+   *
+   * @example <caption>Function predicate</caption>
+   * let filtered = jwks.find(key => key.key_ops.includes('sign'))
+   * // => { ..., key_ops: ['sign'] }
+   *
+   * @example <caption>MongoDB-like object predicate (see [Sift]{@link https://github.com/crcn/sift.js})</caption>
+   * let filtered = jwks.find({ key_ops: { $in: ['sign', 'verify'] } })
+   * // => { ..., key_ops: ['sign'] }
+   *
    * @param  {(Function|Object)} predicate - Find function or predicate object
-   * @return {Promise}
+   * @return {JWK} The _first_ JWK matching the find predicate.
    */
   find (predicate) {
     let { keys } = this
@@ -238,6 +378,7 @@ class JWKSet {
 
   /**
    * rotate
+   * @ignore
    *
    * @param  {(JWK|Array|Object|Function)} keys - jwk, array of jwks, filter predicate object or function.
    * @return {Promise}
@@ -251,10 +392,13 @@ class JWKSet {
   /**
    * exportKeys
    *
-   * @param  {JWK} [kek] - optional encryption key
-   * @return {String} JSON String
+   * @description
+   * Serialize the JWKSet for storage or transmission.
    *
-   * @todo encryption
+   * @param  {JWK} [kek] - optional encryption key
+   * @return {String} The JSON serialized string of the JWKSet.
+   *
+   * @todo Encryption
    */
   exportKeys (kek) {
     return JSON.stringify(this)
@@ -263,9 +407,12 @@ class JWKSet {
   /**
    * publicJwks
    *
-   * @return {String} Publishable JSON JWKSet
+   * @type {String}
    *
-   * @todo memoise this
+   * @description
+   * The publishable JSON serialized string of the JWKSet. Returns _only public keys_.
+   *
+   * @todo Memoization
    */
   get publicJwks () {
     let keys = this.filter(key => key.cryptoKey.type === 'public')
