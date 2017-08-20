@@ -21,8 +21,13 @@ class JWK {
   /**
    * constructor
    *
-   * @class
+   * @class JWK
+   *
+   * @description
    * JSON Web Key
+   *
+   * @param  {Object} data
+   * @param  {Object} [options={}] - Additional JWK metadata.
    */
   constructor (data, options = {}) {
     if (!data) {
@@ -38,40 +43,52 @@ class JWK {
       }
     }
 
-    // Handle object input
-    if (data.alg && options.alg && data.alg !== options.alg) {
-      throw new DataError('Conflicting algorithm option')
+    // Handle options input
+    let metadata = Object.keys(options)
+      .filter(key => {
+        let dataValue = data[key]
+        let optionsValue = options[key]
 
-    } else if (!data.alg && options.alg) {
-      data.alg = options.alg
+        if (dataValue && optionsValue && dataValue !== optionsValue) {
+          throw new DataError(`Conflicting '${key}' option`)
+        }
 
-    } else if (!data.alg && !options.alg) {
-      throw new DataError('Valid JWA algorithm required for JWK')
+        return !dataValue && optionsValue
+      })
+      .reduce((state, key) => {
+        state[key] = options[key]
+        return state
+      }, {})
+
+    // Assign input
+    Object.assign(this, data, metadata)
+
+    // Enforce required properties
+    if (!this.alg) {
+      throw new DataError('Valid \'alg\' required for JWK')
     }
 
-    // Handle kid transferral
-    if (data.kid && options.kid && data.kid !== options.kid) {
-      throw new DataError('Conflicting key identifier option')
-
-    } else if (!data.kid && options.kid) {
-      data.kid = options.kid
-
-    } else if (!data.kid && !options.kid) {
-      throw new DataError('Valid JWA key identifier required for JWK')
+    if (!this.kid) {
+      throw new DataError('Valid \'kid\' required for JWK')
     }
-
-    Object.assign(this, data)
   }
 
   /**
    * importKey
    *
+   * @description
+   * Import a JWK from JSON String or a JS Object.
+   *
    * @param  {(String|Object)} data
-   * @return {Promise}
+   * @param  {Object} [options] - Additional JWK metadata.
+   * @return {Promise.<JWK>} A promise that resolves the JWK instance.
    */
-  static importKey (data, options = {}) {
+  static importKey (data, options) {
     return Promise.resolve()
+      // Create instance
       .then(() => new JWK(data, options))
+
+      // Import CryptoKey and assign to JWK
       .then(jwk => {
         return JWA.importKey(jwk)
           .then(({ cryptoKey }) => {
@@ -89,12 +106,18 @@ class JWK {
   /**
    * fromCryptoKey
    *
-   * @param  {CryptoKey} key
-   * @param  {Object} [options]
-   * @return {Promise}
+   * @description
+   * Import a JWK from a [WebCrypto CryptoKey](https://github.com/anvilresearch/webcrypto).
+   *
+   * @param  {CryptoKey} key - [WebCrypto CryptoKey]{@link https://github.com/anvilresearch/webcrypto}.
+   * @param  {Object} [options] - Additional JWK metadata.
+   * @return {Promise.<JWK>} A promise that resolves the JWK instance.
    */
   static fromCryptoKey (key, options) {
+    // Export JWK
     return JWA.exportKey('jwk', key)
+
+      // Create JWK instance and assign CryptoKey
       .then(data => {
         let jwk = new JWK(data, options)
         Object.defineProperty(jwk, 'cryptoKey', { value: key, enumerable: false, configurable: false })
@@ -105,8 +128,15 @@ class JWK {
   /**
    * sign
    *
-   * @param  {(String|Buffer)} data
-   * @return {Promise}
+   * @description
+   * Sign arbitrary data using the JWK.
+   *
+   * @example
+   * privateJwk.sign('test').then(console.log)
+   * // => "MEUCIQCHwnGM8IsOJgfQsoPgs3hMd8ahfWHM9ZNvj1K6i2yhKQIgWGOuXX43lSTo-U8Pa8sURR53lv6Osjw-dtoLselftqQ"
+   *
+   * @param  {(String|Buffer)} data - The data to sign.
+   * @return {Promise.<String>} A promise that resolves the base64url encoded signature string.
    */
   sign (data) {
     let { alg, cryptoKey } = this
@@ -116,9 +146,16 @@ class JWK {
   /**
    * verify
    *
-   * @param  {(String|Buffer)} data
-   * @param  {String} signature
-   * @return {Promise}
+   * @description
+   * Verify a signature using the JWK.
+   *
+   * @example
+   * publicJwk.verify('test', 'MEUCIQCHwnGM8IsOJgfQsoPgs3hMd8ahfWHM9ZNvj1K6i2yhKQIgWGOuXX43lSTo-U8Pa8sURR53lv6Osjw-dtoLselftqQ').then(console.log)
+   * // => true
+   *
+   * @param  {(String|Buffer)} data - The data to verify.
+   * @param  {String} signature - A base64url signature string.
+   * @return {Promise.<Boolean>} A promise that resolves the boolean result of the signature verification.
    */
   verify (data, signature) {
     let { alg, cryptoKey } = this
@@ -128,11 +165,18 @@ class JWK {
   /**
    * encrypt
    *
-   * @param  {(String|Object)} data
-   * @param  {(String|Buffer)} aad - integrity protected data
-   * @return {Promise}
+   * @description
+   * Encrypt arbitrary data using the JWK.
+   *
+   * @example
+   * secretJwk.encrypt('data').then(console.log)
+   * // => { iv: 'u0l3ttqUFDQ8mcRboHv5Vw', ciphertext: 'yq3K4w', tag: 'fHlZ__uuUnHn0ac-Lnrr-A' }
+   *
+   * @param  {(String|Object)} data - The data to encrypt.
+   * @param  {(String|Buffer)} [aad] - Additional non-encrypted integrity protected data (AES-GCM).
+   * @return {Promise.<Object>} A promise that resolves an object containing the base64url encoded `iv`, `ciphertext` and `tag` (AES-GCM).
    */
-  encrypt (data, aad) {
+  encrypt (data, aad = Buffer.from('')) {
     let { alg, cryptoKey } = this
     return JWA.encrypt(alg, cryptoKey, data, aad)
   }
@@ -140,15 +184,22 @@ class JWK {
   /**
    * decrypt
    *
-   * @param  {(String|Object)} data
-   * @param  {(String|Buffer)} iv
-   * @param  {(String|Buffer)} tag
-   * @param  {(String|Buffer)} aad
-   * @return {Promise}
+   * @description
+   * Decrypt data using the JWK.
+   *
+   * @example
+   * secretJwk.decrypt('yq3K4w', 'u0l3ttqUFDQ8mcRboHv5Vw', 'fHlZ__uuUnHn0ac-Lnrr-A').then(console.log)
+   * // => "data"
+   *
+   * @param  {(String|Buffer)} ciphertext - The encrypted data to decrypt.
+   * @param  {(String|Buffer)} iv - The initialization vector.
+   * @param  {(String|Buffer)} [tag] - The authorization tag (AES-GCM).
+   * @param  {(String|Buffer)} [aad] - Additional non-encrypted integrity protected data (AES-GCM).
+   * @return {Promise.<String>} A promise that resolves the plaintext data.
    */
-  decrypt (data, iv, tag, aad) {
+  decrypt (ciphertext, iv, tag, aad = Buffer.from('')) {
     let { alg, cryptoKey } = this
-    return JWA.decrypt(alg, cryptoKey, data, iv, tag, aad)
+    return JWA.decrypt(alg, cryptoKey, ciphertext, iv, tag, aad)
   }
 }
 
