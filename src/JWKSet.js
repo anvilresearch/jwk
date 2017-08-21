@@ -64,8 +64,16 @@ class JWKSet {
    * JWKSet.generateKeys('RS256')
    *   .then(console.log)
    * // => { keys: [
-   * //      { ..., d: '...', kty: 'RSA', alg: 'RS256', kid: 'abcd' },
-   * //      { ..., kty: 'RSA', alg: 'RS256', kid: 'abcd' }] }
+   * //      { d: '...',
+   * //        kty: 'RSA',
+   * //        alg: 'RS256',
+   * //        kid: 'abcd',
+   * //        ... },
+   * //      { kty: 'RSA',
+   * //        alg: 'RS256',
+   * //        kid: 'abcd',
+   * //        ... }
+   * //    ] }
    *
    * @example <caption>Multiple keypairs</caption>
    * JWKSet.generateKeys(['RS256', 'ES256'])
@@ -120,7 +128,8 @@ class JWKSet {
    * @example <caption>Import keys from JSON string</caption>
    * let jsonJwkSet = '{"meta":"abcd","keys":[...]}'
    *
-   * JWKSet.importKeys(jsonJwkSet).then(console.log)
+   * JWKSet.importKeys(jsonJwkSet)
+   *   .then(console.log)
    * // => { meta: 'abcd', keys: [...] }
    *
    * @example <caption>Import keys from object</caption>
@@ -196,7 +205,8 @@ class JWKSet {
    * //    ]
    *
    * @example <caption>Multiple keypairs</caption>
-   * jwks.generateKeys(['RS256', 'ES256']).then(console.log)
+   * jwks.generateKeys(['RS256', 'ES256'])
+   *   .then(console.log)
    * // => [
    * //      [ { kty: 'RSA' },
    * //        { kty: 'RSA' } ],
