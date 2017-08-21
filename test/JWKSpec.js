@@ -44,7 +44,9 @@ const ECPublicJWKNoKid = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoKid.kid
 
 const plainTextData = 'data'
+const plainTextAad = 'meta'
 const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
+const encryptedDataWithAad = {"iv":"zrXJWOthT2tnFErPhWCrfw","ciphertext":"JWwKBg","tag":"txl7BQK4fxEP5cie2OQEZA","aad":"bWV0YQ"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
 
 /**
@@ -169,6 +171,19 @@ describe('JWK', () => {
         data.should.haveOwnProperty('ciphertext')
         data.should.haveOwnProperty('iv')
         data.should.haveOwnProperty('tag')
+        data.should.not.haveOwnProperty('aad')
+      })
+    })
+
+    describe('with aad', () => {
+
+      it('should resolve encrypted data', () => {
+        return jwk.encrypt(plainTextData, plainTextAad).then(data => {
+          data.should.haveOwnProperty('ciphertext')
+          data.should.haveOwnProperty('iv')
+          data.should.haveOwnProperty('tag')
+          data.should.haveOwnProperty('aad')
+        })
       })
     })
   })
@@ -182,12 +197,25 @@ describe('JWK', () => {
 
     it('should return a promise', () => {
       let { ciphertext, iv, tag } = encryptedData
-      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.be.fulfilled
+      return jwk.decrypt(ciphertext, iv, tag).should.be.fulfilled
     })
 
     it('should resolve plain text data', () => {
       let { ciphertext, iv, tag } = encryptedData
-      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.eventually.equal(plainTextData)
+      return jwk.decrypt(ciphertext, iv, tag).should.eventually.equal(plainTextData)
+    })
+
+    describe('with aad', () => {
+
+      it('should reject if aad is omitted', () => {
+        let { ciphertext, iv, tag } = encryptedDataWithAad
+        return jwk.decrypt(ciphertext, iv, tag).should.be.rejected
+      })
+
+      it('should resolve plain text data', () => {
+        let { ciphertext, iv, tag, aad } = encryptedDataWithAad
+        return jwk.decrypt(ciphertext, iv, tag, aad).should.eventually.equal(plainTextData)
+      })
     })
   })
 })
