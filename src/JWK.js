@@ -132,7 +132,8 @@ class JWK {
    * Sign arbitrary data using the JWK.
    *
    * @example <caption>Signing the string "test"</caption>
-   * privateJwk.sign('test').then(console.log)
+   * privateJwk.sign('test')
+   *   .then(console.log)
    * //
    * // (line breaks for display only)
    * //
@@ -160,7 +161,8 @@ class JWK {
    * let signature = `MEUCIQCHwnGM8IsOJgfQsoPgs3hMd8ahfWHM9ZN
    * vj1K6i2yhKQIgWGOuXX43lSTo-U8Pa8sURR53lv6Osjw-dtoLselftqQ`
    *
-   * publicJwk.verify('test', signature).then(console.log)
+   * publicJwk.verify('test', signature)
+   *   .then(console.log)
    * // => true
    *
    * @param  {(String|Buffer)} data - The data to verify.
@@ -179,7 +181,8 @@ class JWK {
    * Encrypt arbitrary data using the JWK.
    *
    * @example <caption>Encrypt the string "data"</caption>
-   * secretJwk.encrypt('data').then(console.log)
+   * secretJwk.encrypt('data')
+   *   .then(console.log)
    * // => { iv: 'u0l3ttqUFDQ8mcRboHv5Vw',
    * //      ciphertext: 'yq3K4w',
    * //      tag: 'fHlZ__uuUnHn0ac-Lnrr-A' }
@@ -205,7 +208,8 @@ class JWK {
    * let iv = 'u0l3ttqUFDQ8mcRboHv5Vw'
    * let tag = 'fHlZ__uuUnHn0ac-Lnrr-A'
    *
-   * secretJwk.decrypt(ciphertext, iv, tag).then(console.log)
+   * secretJwk.decrypt(ciphertext, iv, tag)
+   *   .then(console.log)
    * // => "data"
    *
    * @param  {(String|Buffer)} ciphertext - The encrypted data to decrypt.
