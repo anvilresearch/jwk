@@ -191,7 +191,7 @@ class JWK {
    * @param  {(String|Buffer)} [aad] - Additional non-encrypted integrity protected data (AES-GCM).
    * @return {Promise.<Object>} A promise that resolves an object containing the base64url encoded `iv`, `ciphertext` and `tag` (AES-GCM).
    */
-  encrypt (data, aad = Buffer.from('')) {
+  encrypt (data, aad) {
     let { alg, cryptoKey } = this
     return JWA.encrypt(alg, cryptoKey, data, aad)
   }
@@ -218,7 +218,7 @@ class JWK {
    * @param  {(String|Buffer)} [aad] - Additional non-encrypted integrity protected data (AES-GCM).
    * @return {Promise.<String>} A promise that resolves the plaintext data.
    */
-  decrypt (ciphertext, iv, tag, aad = Buffer.from('')) {
+  decrypt (ciphertext, iv, tag, aad) {
     let { alg, cryptoKey } = this
     return JWA.decrypt(alg, cryptoKey, ciphertext, iv, tag, aad)
   }
