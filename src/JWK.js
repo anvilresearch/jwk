@@ -89,18 +89,15 @@ class JWK {
       .then(() => new JWK(data, options))
 
       // Import CryptoKey and assign to JWK
-      .then(jwk => {
-        return JWA.importKey(jwk)
-          .then(({ cryptoKey }) => {
-            Object.defineProperty(jwk, 'cryptoKey', {
-              value: cryptoKey,
-              enumerable: false,
-              configurable: false
-            })
+      .then(jwk => JWA.importKey(jwk).then(({ cryptoKey }) => {
+        Object.defineProperty(jwk, 'cryptoKey', {
+          value: cryptoKey,
+          enumerable: false,
+          configurable: false
+        })
 
-            return jwk
-          })
-      })
+        return jwk
+      }))
   }
 
   /**
@@ -120,7 +117,13 @@ class JWK {
       // Create JWK instance and assign CryptoKey
       .then(data => {
         let jwk = new JWK(data, options)
-        Object.defineProperty(jwk, 'cryptoKey', { value: key, enumerable: false, configurable: false })
+
+        Object.defineProperty(jwk, 'cryptoKey', {
+          value: key,
+          enumerable: false,
+          configurable: false
+        })
+
         return jwk
       })
   }
