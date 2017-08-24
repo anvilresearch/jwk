@@ -2,6 +2,7 @@
 
 /**
  * DataError
+ * @ignore
  */
 class DataError extends Error {
 

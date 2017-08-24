@@ -44,7 +44,9 @@ const ECPublicJWKNoKid = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoKid.kid
 
 const plainTextData = 'data'
+const plainTextAad = 'meta'
 const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
+const encryptedDataWithAad = {"iv":"zrXJWOthT2tnFErPhWCrfw","ciphertext":"JWwKBg","tag":"txl7BQK4fxEP5cie2OQEZA","aad":"bWV0YQ"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
 
 /**
@@ -69,7 +71,7 @@ describe('JWK', () => {
     })
 
     it('should throw if conflicting alg options are passed in', () => {
-      expect(() => new JWK(ECPublicJWK, { alg: 'KS256' })).to.throw('Conflicting algorithm option')
+      expect(() => new JWK(ECPublicJWK, { alg: 'KS256' })).to.throw('Conflicting \'alg\' option')
     })
 
     it('should not throw if alg passed in twice but not conflicting', () => {
@@ -82,11 +84,11 @@ describe('JWK', () => {
     })
 
     it('should throw if alg is not present on data or options', () => {
-      expect(new JWK(ECPublicJWKNoAlg, { alg: 'ES256' })).to.throw
+      expect(() => new JWK(ECPublicJWKNoAlg, {})).to.throw('Valid \'alg\' required for JWK')
     })
 
     it('should throw if conflicting kid options are passed in', () => {
-      expect(() => new JWK(ECPublicJWK, { kid: '1' })).to.throw('Conflicting key identifier option')
+      expect(() => new JWK(ECPublicJWK, { kid: '1' })).to.throw('Conflicting \'kid\' option')
     })
 
     it('should not throw if kid passed in twice but not conflicting', () => {
@@ -99,7 +101,7 @@ describe('JWK', () => {
     })
 
     it('should throw if kid is not present on data or options', () => {
-      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid JWA key identifier required for JWK')
+      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid \'kid\' required for JWK')
     })
 
     it('should copy non-standard key metadata', () => {
@@ -111,10 +113,43 @@ describe('JWK', () => {
 
   describe('importKey', () => {
 
+    it('should return a promise', () => {
+      return JWK.importKey(ECPrivateJWK).should.be.fulfilled
+    })
+
+    it('should resolve an instance of JWK', () => {
+      return JWK.importKey(ECPrivateJWK).should.eventually.be.an.instanceOf(JWK)
+    })
+
+    it('should have a cryptoKey property', () => {
+      return JWK.importKey(ECPrivateJWK).then(jwk => {
+        jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
   })
 
   describe('fromCryptoKey', () => {
+    let cryptoKey
 
+    before(() => {
+      return JWK.importKey(ECPrivateJWK).then(jwk => {
+        cryptoKey = jwk.cryptoKey
+      })
+    })
+
+    it('should return a promise', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).should.eventually.be.an.instanceOf(JWK)
+    })
+
+    it('should resolve an instance of JWK', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).should.be.fulfilled
+    })
+
+    it('should have a cryptoKey property', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).then(jwk => {
+        jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
   })
 
   describe('sign', () => {
@@ -169,6 +204,19 @@ describe('JWK', () => {
         data.should.haveOwnProperty('ciphertext')
         data.should.haveOwnProperty('iv')
         data.should.haveOwnProperty('tag')
+        data.should.not.haveOwnProperty('aad')
+      })
+    })
+
+    describe('with aad', () => {
+
+      it('should resolve encrypted data', () => {
+        return jwk.encrypt(plainTextData, plainTextAad).then(data => {
+          data.should.haveOwnProperty('ciphertext')
+          data.should.haveOwnProperty('iv')
+          data.should.haveOwnProperty('tag')
+          data.should.haveOwnProperty('aad')
+        })
       })
     })
   })
@@ -182,12 +230,25 @@ describe('JWK', () => {
 
     it('should return a promise', () => {
       let { ciphertext, iv, tag } = encryptedData
-      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.be.fulfilled
+      return jwk.decrypt(ciphertext, iv, tag).should.be.fulfilled
     })
 
     it('should resolve plain text data', () => {
       let { ciphertext, iv, tag } = encryptedData
-      return jwk.decrypt(ciphertext, iv, tag, Buffer.from('')).should.eventually.equal(plainTextData)
+      return jwk.decrypt(ciphertext, iv, tag).should.eventually.equal(plainTextData)
+    })
+
+    describe('with aad', () => {
+
+      it('should reject if aad is omitted', () => {
+        let { ciphertext, iv, tag } = encryptedDataWithAad
+        return jwk.decrypt(ciphertext, iv, tag).should.be.rejected
+      })
+
+      it('should resolve plain text data', () => {
+        let { ciphertext, iv, tag, aad } = encryptedDataWithAad
+        return jwk.decrypt(ciphertext, iv, tag, aad).should.eventually.equal(plainTextData)
+      })
     })
   })
 })
