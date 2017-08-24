@@ -113,10 +113,43 @@ describe('JWK', () => {
 
   describe('importKey', () => {
 
+    it('should return a promise', () => {
+      return JWK.importKey(ECPrivateJWK).should.be.fulfilled
+    })
+
+    it('should resolve an instance of JWK', () => {
+      return JWK.importKey(ECPrivateJWK).should.eventually.be.an.instanceOf(JWK)
+    })
+
+    it('should have a cryptoKey property', () => {
+      return JWK.importKey(ECPrivateJWK).then(jwk => {
+        jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
   })
 
   describe('fromCryptoKey', () => {
+    let cryptoKey
 
+    before(() => {
+      return JWK.importKey(ECPrivateJWK).then(jwk => {
+        cryptoKey = jwk.cryptoKey
+      })
+    })
+
+    it('should return a promise', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).should.eventually.be.an.instanceOf(JWK)
+    })
+
+    it('should resolve an instance of JWK', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).should.be.fulfilled
+    })
+
+    it('should have a cryptoKey property', () => {
+      return JWK.fromCryptoKey(cryptoKey, { alg: 'EC256', kid: 'abcd123$' }).then(jwk => {
+        jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
   })
 
   describe('sign', () => {
