@@ -275,6 +275,52 @@ class JWK {
     hash.update(json)
     return base64url(hash.digest())
   }
+
+  /**
+   * generateProtected
+   *
+   * @description
+   * Use key metadata to generate a JWS protected header object.
+   *
+   * @example <caption>Basic JWS Header with JWC</caption>
+   * jwk.generateProtected({ jwc: 'base64url encoded compact jwc' })
+   * // => { alg: 'RS256',
+   * //      kid: 'abcd123$',
+   * //      jwc: 'base64url encoded compact jwc' }
+   *
+   * @example <caption>Basic JWS Header with JKU</caption>
+   * jwk.generateProtected({ jku: 'https://example.com/jwks' })
+   * // => { alg: 'RS256',
+   * //      kid: 'abcd123$',
+   * //      jku: 'https://example.com/jwks' }
+   *
+   * @param  {Object} props - Additional properties to include in header.
+   * @return {Object} JWS Header
+   */
+  generateProtected (props) {
+    let { alg, kid, key_ops, use } = this
+    let header = Object.assign({}, { alg, kid }, props)
+
+    // Check key_ops or use
+    if (!(Array.isArray(key_ops) && key_ops.includes('sign')) && !(use && use === 'sig')) {
+      throw new DataError('Invalid key usage option')
+    }
+
+    // Check for mandatory properties
+    if (!header.alg) {
+      throw new DataError('\'alg\' is required')
+    }
+
+    if (!header.kid) {
+      throw new DataError('\'kid\' is required')
+    }
+
+    if (!header.jku && !header.jwc) {
+      throw new DataError('Either \'jku\' or \'jwc\' is required')
+    }
+
+    return header
+  }
 }
 
 /**
