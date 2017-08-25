@@ -109,9 +109,8 @@ describe('JWK', () => {
       jwk.kid.should.equal('2')
     })
 
-    it('should assign key thumbprint as kid if not present on data or options', () => {
-      let jwk = new JWK(ECPublicJWKNoKid)
-      jwk.kid.should.equal(ecThumbprint)
+    it('should throw if kid is not present on data or options', () => {
+      expect(() => new JWK(ECPublicJWKNoKid)).to.throw('Valid \'kid\' required for JWK')
     })
 
     it('should copy non-standard key metadata', () => {
@@ -134,6 +133,12 @@ describe('JWK', () => {
     it('should have a cryptoKey property', () => {
       return JWK.importKey(ECPrivateJWK).then(jwk => {
         jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
+
+    it('should calculate the JWK thumbprint if no `kid` is provided', () => {
+      return JWK.importKey(ECPublicJWKNoKid, {}).then(jwk => {
+        jwk.kid.should.equal(ecThumbprint)
       })
     })
   })
@@ -275,28 +280,32 @@ describe('JWK', () => {
       ])
     })
 
+    it('should return a promise', () => {
+      rsa.thumbprint().should.be.fulfilled
+    })
+
     it('should return a string', () => {
-      rsa.thumbprint().should.be.a('string')
+      rsa.thumbprint().should.eventually.be.a('string')
     })
 
-    it('should produce a thumbprint for RSA keys', () => {
-      rsa.thumbprint().should.equal(rsaThumbprint)
+    it('should resolve a thumbprint for RSA keys', () => {
+      rsa.thumbprint().should.eventually.equal(rsaThumbprint)
     })
 
-    it('should produce a thumbprint for EC keys', () => {
-      ec.thumbprint().should.equal(ecThumbprint)
+    it('should resolve a thumbprint for EC keys', () => {
+      ec.thumbprint().should.eventually.equal(ecThumbprint)
     })
 
-    it('should produce a thumbprint for symmetric keys', () => {
-      sym.thumbprint().should.equal(symThumbprint)
+    it('should resolve a thumbprint for symmetric keys', () => {
+      sym.thumbprint().should.eventually.equal(symThumbprint)
     })
 
-    it('should throw if the JWK does not have a kty', () => {
-      expect(() => kty.thumbprint()).to.throw('Invalid \'kty\'')
+    it('should reject if the JWK does not have a kty', () => {
+      kty.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
     })
 
-    it('should throw if the kty is not valid', () => {
-      expect(() => inv.thumbprint()).to.throw('Invalid \'kty\'')
+    it('should reject if the kty is not valid', () => {
+      inv.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
     })
   })
 
