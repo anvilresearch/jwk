@@ -268,12 +268,14 @@ describe('JWK', () => {
   })
 
   describe('thumbprint', () => {
-    let ec, rsa, sym, kty, inv
+    let ec, ecPrv, rsa, rsaPrv, sym, kty, inv
 
     before(() => {
       return Promise.all([
         JWK.importKey(ECPublicJWK).then(key => ec = key),
+        JWK.importKey(ECPrivateJWK).then(key => ecPrv = key),
         JWK.importKey(RSAPublicJWK).then(key => rsa = key),
+        JWK.importKey(RSAPrivateJWK).then(key => rsaPrv = key),
         JWK.importKey(A256GCMJWK).then(key => sym = key),
         Promise.resolve(new JWK(ECPublicJWKNoKty)).then(key => kty = key),
         Promise.resolve(new JWK(ECPublicJWKInvalidKty)).then(key => inv = key)
@@ -281,31 +283,40 @@ describe('JWK', () => {
     })
 
     it('should return a promise', () => {
-      rsa.thumbprint().should.be.fulfilled
+      return rsa.thumbprint().should.be.fulfilled
     })
 
     it('should return a string', () => {
-      rsa.thumbprint().should.eventually.be.a('string')
+      return rsa.thumbprint().should.eventually.be.a('string')
     })
 
     it('should resolve a thumbprint for RSA keys', () => {
-      rsa.thumbprint().should.eventually.equal(rsaThumbprint)
+      return rsa.thumbprint().should.eventually.equal(rsaThumbprint)
     })
 
     it('should resolve a thumbprint for EC keys', () => {
-      ec.thumbprint().should.eventually.equal(ecThumbprint)
+      return ec.thumbprint().should.eventually.equal(ecThumbprint)
     })
 
     it('should resolve a thumbprint for symmetric keys', () => {
-      sym.thumbprint().should.eventually.equal(symThumbprint)
+      return sym.thumbprint().should.eventually.equal(symThumbprint)
+    })
+
+    it('should resolve the same thumbprint for public and private keys', () => {
+      return Promise.all([
+        ec.thumbprint().then(print => print.should.equal(ecThumbprint)),
+        ecPrv.thumbprint().then(print => print.should.equal(ecThumbprint)),
+        rsa.thumbprint().then(print => print.should.equal(rsaThumbprint)),
+        rsaPrv.thumbprint().then(print => print.should.equal(rsaThumbprint))
+      ])
     })
 
     it('should reject if the JWK does not have a kty', () => {
-      kty.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
+      return kty.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
     })
 
     it('should reject if the kty is not valid', () => {
-      inv.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
+      return inv.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
     })
   })
 
