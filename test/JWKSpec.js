@@ -320,7 +320,7 @@ describe('JWK', () => {
     })
   })
 
-  describe('generateProtected', () => {
+  describe('getProtectedHeader', () => {
     let ec, ecPub, rsa, sym, noAlg, noKid, noOps, useEc
     let jkuParams = { jku: 'https://example.com/jwks' }
     let jwcParams = { jwc: 'compact serialization jwc' }
@@ -339,52 +339,52 @@ describe('JWK', () => {
     })
 
     it('should return an object', () => {
-      let header = ec.generateProtected(jkuParams)
+      let header = ec.getProtectedHeader(jkuParams)
       header.should.be.an('object')
       expect(header).to.not.be.null
     })
 
     it('should throw if `key_ops` does not contain \'sign\' and `use` is not \'sig\'', () => {
-      expect(() => sym.generateProtected(jkuParams)).to.throw('Invalid key usage option')
-      expect(() => noOps.generateProtected(jkuParams)).to.throw('Invalid key usage option')
+      expect(() => sym.getProtectedHeader(jkuParams)).to.throw('Invalid key usage option')
+      expect(() => noOps.getProtectedHeader(jkuParams)).to.throw('Invalid key usage option')
     })
 
     it('should accept either `key_ops` or `use`', () => {
-      ec.generateProtected(jkuParams)
+      ec.getProtectedHeader(jkuParams)
       ec.key_ops.should.include('sign')
       expect(ec.use).to.be.undefined
-      useEc.generateProtected(jkuParams)
+      useEc.getProtectedHeader(jkuParams)
       useEc.use.should.equal('sig')
       expect(useEc.key_ops).to.be.undefined
     })
 
     it('should contain an \'alg\'', () => {
-      ec.generateProtected(jkuParams)
+      ec.getProtectedHeader(jkuParams)
         .alg.should.equal(ec.alg)
     })
 
     it('should throw if \'alg\' is omitted', () => {
-      expect(() => noAlg.generateProtected(jkuParams)).to.throw('\'alg\' is required')
+      expect(() => noAlg.getProtectedHeader(jkuParams)).to.throw('\'alg\' is required')
     })
 
     it('should contain a \'kid\'', () => {
-      ec.generateProtected(jkuParams)
+      ec.getProtectedHeader(jkuParams)
         .kid.should.equal(ec.kid)
     })
 
     it('should throw if \'kid\' is omitted', () => {
-      expect(() => noKid.generateProtected(jkuParams)).to.throw('\'kid\' is required')
+      expect(() => noKid.getProtectedHeader(jkuParams)).to.throw('\'kid\' is required')
     })
 
     it('should contain a \'jku\' or a \'jwc\'', () => {
-      ec.generateProtected(jkuParams)
+      ec.getProtectedHeader(jkuParams)
         .jku.should.equal(jkuParams.jku)
-      ec.generateProtected(jwcParams)
+      ec.getProtectedHeader(jwcParams)
         .jwc.should.equal(jwcParams.jwc)
     })
 
     it('should throw if \'jku\' and \'jwc\' are omitted', () => {
-      expect(() => ec.generateProtected()).to.throw('Either \'jku\' or \'jwc\' is required')
+      expect(() => ec.getProtectedHeader()).to.throw('Either \'jku\' or \'jwc\' is required')
     })
   })
 })
