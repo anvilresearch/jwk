@@ -4,6 +4,8 @@
  * Dependencies
  * @ignore
  */
+const crypto = require('@trust/webcrypto')
+const base64url = require('base64url')
 const { JWA } = require('@trust/jwa')
 
 /**
@@ -85,8 +87,18 @@ class JWK {
    */
   static importKey (data, options) {
     return Promise.resolve()
+
+      // Calculate Thumbprint
+      .then(() => this.thumbprint(data))
+
       // Create instance
-      .then(() => new JWK(data, options))
+      .then(hash => {
+        if (hash && !data.kid && !(options && options.kid)) {
+          data.kid = hash
+        }
+
+        return new JWK(data, options)
+      })
 
       // Import CryptoKey and assign to JWK
       .then(jwk => JWA.importKey(jwk).then(({ cryptoKey }) => {
@@ -111,12 +123,22 @@ class JWK {
    * @return {Promise.<JWK>} A promise that resolves the JWK instance.
    */
   static fromCryptoKey (key, options) {
+    let rawJwk
+
     // Export JWK
     return JWA.exportKey('jwk', key)
+      .then(data => {
+        rawJwk = data
+        return this.thumbprint(rawJwk)
+      })
 
       // Create JWK instance and assign CryptoKey
-      .then(data => {
-        let jwk = new JWK(data, options)
+      .then(hash => {
+        if (!rawJwk.kid && !(options && options.kid)) {
+          rawJwk.kid = hash
+        }
+
+        let jwk = new JWK(rawJwk, options)
 
         Object.defineProperty(jwk, 'cryptoKey', {
           value: key,
@@ -126,6 +148,54 @@ class JWK {
 
         return jwk
       })
+  }
+
+  /**
+   * thumbprint
+   *
+   * @description
+   * Calculate the SHA-256 JWK Thumbprint according to [RFC7638]{@link https://tools.ietf.org/html/rfc7638}.
+   * This method is used to create a unique `kid` if none is specified.
+   *
+   * @example <caption>SHA-256 Thumbprint</caption>
+   * JWK.thumbprint(jwk)
+   *   .then(console.log)
+   * //
+   * // (line breaks for display only)
+   * //
+   * // => "45BLsBiWcghaEf_NF70Gf5oQcYLHaA
+   * //     tks0C48tT5SJ4"
+   *
+   * @param  {Object} jwk
+   * @return {Promise.<String>} A promise that resolves the JWK Thumbprint String.
+   */
+  static thumbprint (jwk) {
+    let { kty } = jwk
+    let data
+
+    // RSA JWK Thumbprint Fields
+    if (kty === 'RSA') {
+      let { e, n } = jwk
+      data = { e, kty, n }
+
+    // ECDSA JWK Thumbprint Fields
+    } else if (kty === 'EC') {
+      let { crv, x, y } = jwk
+      data = { crv, kty, x, y }
+
+    // Symmetric JWK Thumbprint Fields
+    } else if (kty === 'oct') {
+      let { k } = jwk
+      data = { k, kty }
+
+    // Invalid kty
+    } else {
+      return Promise.reject(new DataError('Invalid \'kty\''))
+    }
+
+    let json = JSON.stringify(data)
+    return crypto.subtle.digest({ name: 'SHA-256' }, json)
+      .then(hash => base64url(hash))
   }
 
   /**
@@ -224,6 +294,74 @@ class JWK {
   decrypt (ciphertext, iv, tag, aad) {
     let { alg, cryptoKey } = this
     return JWA.decrypt(alg, cryptoKey, ciphertext, iv, tag, aad)
+  }
+
+  /**
+   * thumbprint
+   *
+   * @description
+   * Calculate the SHA-256 JWK Thumbprint according to [RFC7638]{@link https://tools.ietf.org/html/rfc7638}.
+   * This method is used to create a unique `kid` if none is specified.
+   *
+   * @example <caption>SHA-256 Thumbprint</caption>
+   * jwk.thumbprint()
+   *   .then(console.log)
+   * //
+   * // (line breaks for display only)
+   * //
+   * // => "45BLsBiWcghaEf_NF70Gf5oQcYLHaA
+   * //     tks0C48tT5SJ4"
+   *
+   * @return {Promise.<String>} A promise that resolves the JWK Thumbprint String.
+   */
+  thumbprint () {
+    return JWK.thumbprint(this)
+  }
+
+  /**
+   * getProtectedHeader
+   *
+   * @description
+   * Use key metadata to generate a JWS protected header object.
+   *
+   * @example <caption>Basic JWS Header with JWC</caption>
+   * jwk.getProtectedHeader({ jwc: 'base64url encoded compact jwc' })
+   * // => { alg: 'RS256',
+   * //      kid: 'abcd123$',
+   * //      jwc: 'base64url encoded compact jwc' }
+   *
+   * @example <caption>Basic JWS Header with JKU</caption>
+   * jwk.getProtectedHeader({ jku: 'https://example.com/jwks' })
+   * // => { alg: 'RS256',
+   * //      kid: 'abcd123$',
+   * //      jku: 'https://example.com/jwks' }
+   *
+   * @param  {Object} params - Additional properties to include in header.
+   * @return {Object} JWS Header
+   */
+  getProtectedHeader (params) {
+    let { alg, kid, key_ops, use } = this
+    let header = Object.assign({}, { alg, kid }, params)
+
+    // Check key_ops or use
+    if (!(Array.isArray(key_ops) && key_ops.includes('sign')) && !(use && use === 'sig')) {
+      throw new DataError('Invalid key usage option')
+    }
+
+    // Check for mandatory properties
+    if (!header.alg) {
+      throw new DataError('\'alg\' is required')
+    }
+
+    if (!header.kid) {
+      throw new DataError('\'kid\' is required')
+    }
+
+    if (!header.jku && !header.jwc) {
+      throw new DataError('Either \'jku\' or \'jwc\' is required')
+    }
+
+    return header
   }
 }
 

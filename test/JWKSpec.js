@@ -32,7 +32,7 @@ const { DataError, OperationError } = require('../src/errors')
  * Test Data
  * @ignore
  */
-const { ECPrivateJWK, ECPublicJWK, A256GCMJWK } = require('./keys')
+const { ECPrivateJWK, ECPublicJWK, A256GCMJWK, RSAPrivateJWK, RSAPublicJWK } = require('./keys')
 
 const ECPublicJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
 const InvalidJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
@@ -43,11 +43,20 @@ delete ECPublicJWKNoAlg.alg
 const ECPublicJWKNoKid = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoKid.kid
 
+const ECPublicJWKNoKty = Object.assign({}, ECPublicJWK)
+delete ECPublicJWKNoKty.kty
+
+const ECPublicJWKInvalidKty = Object.assign({}, ECPublicJWK)
+ECPublicJWKInvalidKty.kty = 'invalid'
+
 const plainTextData = 'data'
 const plainTextAad = 'meta'
 const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
 const encryptedDataWithAad = {"iv":"zrXJWOthT2tnFErPhWCrfw","ciphertext":"JWwKBg","tag":"txl7BQK4fxEP5cie2OQEZA","aad":"bWV0YQ"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
+const ecThumbprint = '45BLsBiWcghaEf_NF70Gf5oQcYLHaAtks0C48tT5SJ4'
+const rsaThumbprint = 'fXSFPtseA8Q5nzSGuHhj5mHyNCGYUmznTbqEV-oo0Fc'
+const symThumbprint = '25BH4hLm8A-gw20EHx8QvfDRCt3hKhFRYz9E_2Tge2c'
 
 /**
  * Tests
@@ -101,7 +110,7 @@ describe('JWK', () => {
     })
 
     it('should throw if kid is not present on data or options', () => {
-      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid \'kid\' required for JWK')
+      expect(() => new JWK(ECPublicJWKNoKid)).to.throw('Valid \'kid\' required for JWK')
     })
 
     it('should copy non-standard key metadata', () => {
@@ -124,6 +133,12 @@ describe('JWK', () => {
     it('should have a cryptoKey property', () => {
       return JWK.importKey(ECPrivateJWK).then(jwk => {
         jwk.should.haveOwnProperty('cryptoKey')
+      })
+    })
+
+    it('should calculate the JWK thumbprint if no `kid` is provided', () => {
+      return JWK.importKey(ECPublicJWKNoKid, {}).then(jwk => {
+        jwk.kid.should.equal(ecThumbprint)
       })
     })
   })
@@ -249,6 +264,127 @@ describe('JWK', () => {
         let { ciphertext, iv, tag, aad } = encryptedDataWithAad
         return jwk.decrypt(ciphertext, iv, tag, aad).should.eventually.equal(plainTextData)
       })
+    })
+  })
+
+  describe('thumbprint', () => {
+    let ec, ecPrv, rsa, rsaPrv, sym, kty, inv
+
+    before(() => {
+      return Promise.all([
+        JWK.importKey(ECPublicJWK).then(key => ec = key),
+        JWK.importKey(ECPrivateJWK).then(key => ecPrv = key),
+        JWK.importKey(RSAPublicJWK).then(key => rsa = key),
+        JWK.importKey(RSAPrivateJWK).then(key => rsaPrv = key),
+        JWK.importKey(A256GCMJWK).then(key => sym = key),
+        Promise.resolve(new JWK(ECPublicJWKNoKty)).then(key => kty = key),
+        Promise.resolve(new JWK(ECPublicJWKInvalidKty)).then(key => inv = key)
+      ])
+    })
+
+    it('should return a promise', () => {
+      return rsa.thumbprint().should.be.fulfilled
+    })
+
+    it('should return a string', () => {
+      return rsa.thumbprint().should.eventually.be.a('string')
+    })
+
+    it('should resolve a thumbprint for RSA keys', () => {
+      return rsa.thumbprint().should.eventually.equal(rsaThumbprint)
+    })
+
+    it('should resolve a thumbprint for EC keys', () => {
+      return ec.thumbprint().should.eventually.equal(ecThumbprint)
+    })
+
+    it('should resolve a thumbprint for symmetric keys', () => {
+      return sym.thumbprint().should.eventually.equal(symThumbprint)
+    })
+
+    it('should resolve the same thumbprint for public and private keys', () => {
+      return Promise.all([
+        ec.thumbprint().then(print => print.should.equal(ecThumbprint)),
+        ecPrv.thumbprint().then(print => print.should.equal(ecThumbprint)),
+        rsa.thumbprint().then(print => print.should.equal(rsaThumbprint)),
+        rsaPrv.thumbprint().then(print => print.should.equal(rsaThumbprint))
+      ])
+    })
+
+    it('should reject if the JWK does not have a kty', () => {
+      return kty.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
+    })
+
+    it('should reject if the kty is not valid', () => {
+      return inv.thumbprint().should.be.rejectedWith('Invalid \'kty\'')
+    })
+  })
+
+  describe('getProtectedHeader', () => {
+    let ec, ecPub, rsa, sym, noAlg, noKid, noOps, useEc
+    let jkuParams = { jku: 'https://example.com/jwks' }
+    let jwcParams = { jwc: 'compact serialization jwc' }
+
+    before(() => {
+      return Promise.all([
+        JWK.importKey(ECPrivateJWK).then(key => ec = key),
+        JWK.importKey(ECPublicJWK).then(key => ecPub = key),
+        JWK.importKey(RSAPrivateJWK).then(key => rsa = key),
+        JWK.importKey(A256GCMJWK).then(key => sym = key),
+        Promise.resolve(new JWK(ECPrivateJWK)).then(key => { delete key.alg; noAlg = key }),
+        Promise.resolve(new JWK(ECPrivateJWK)).then(key => { delete key.kid; noKid = key }),
+        JWK.importKey(ECPrivateJWK).then(key => { delete key.key_ops; noOps = key }),
+        JWK.importKey(ECPrivateJWK).then(key => { delete key.key_ops; key.use = 'sig'; useEc = key }),
+      ])
+    })
+
+    it('should return an object', () => {
+      let header = ec.getProtectedHeader(jkuParams)
+      header.should.be.an('object')
+      expect(header).to.not.be.null
+    })
+
+    it('should throw if `key_ops` does not contain \'sign\' and `use` is not \'sig\'', () => {
+      expect(() => sym.getProtectedHeader(jkuParams)).to.throw('Invalid key usage option')
+      expect(() => noOps.getProtectedHeader(jkuParams)).to.throw('Invalid key usage option')
+    })
+
+    it('should accept either `key_ops` or `use`', () => {
+      ec.getProtectedHeader(jkuParams)
+      ec.key_ops.should.include('sign')
+      expect(ec.use).to.be.undefined
+      useEc.getProtectedHeader(jkuParams)
+      useEc.use.should.equal('sig')
+      expect(useEc.key_ops).to.be.undefined
+    })
+
+    it('should contain an \'alg\'', () => {
+      ec.getProtectedHeader(jkuParams)
+        .alg.should.equal(ec.alg)
+    })
+
+    it('should throw if \'alg\' is omitted', () => {
+      expect(() => noAlg.getProtectedHeader(jkuParams)).to.throw('\'alg\' is required')
+    })
+
+    it('should contain a \'kid\'', () => {
+      ec.getProtectedHeader(jkuParams)
+        .kid.should.equal(ec.kid)
+    })
+
+    it('should throw if \'kid\' is omitted', () => {
+      expect(() => noKid.getProtectedHeader(jkuParams)).to.throw('\'kid\' is required')
+    })
+
+    it('should contain a \'jku\' or a \'jwc\'', () => {
+      ec.getProtectedHeader(jkuParams)
+        .jku.should.equal(jkuParams.jku)
+      ec.getProtectedHeader(jwcParams)
+        .jwc.should.equal(jwcParams.jwc)
+    })
+
+    it('should throw if \'jku\' and \'jwc\' are omitted', () => {
+      expect(() => ec.getProtectedHeader()).to.throw('Either \'jku\' or \'jwc\' is required')
     })
   })
 })
