@@ -32,7 +32,7 @@ const { DataError, OperationError } = require('../src/errors')
  * Test Data
  * @ignore
  */
-const { ECPrivateJWK, ECPublicJWK, A256GCMJWK } = require('./keys')
+const { ECPrivateJWK, ECPublicJWK, A256GCMJWK, RSAPublicJWK } = require('./keys')
 
 const ECPublicJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
 const InvalidJWKString = fs.readFileSync(path.join(cwd, 'test', 'file_import', 'fileImportJWKTestData.json'), 'utf8')
@@ -43,11 +43,20 @@ delete ECPublicJWKNoAlg.alg
 const ECPublicJWKNoKid = Object.assign({}, ECPublicJWK)
 delete ECPublicJWKNoKid.kid
 
+const ECPublicJWKNoKty = Object.assign({}, ECPublicJWK)
+delete ECPublicJWKNoKty.kty
+
+const ECPublicJWKInvalidKty = Object.assign({}, ECPublicJWK)
+ECPublicJWKInvalidKty.kty = 'invalid'
+
 const plainTextData = 'data'
 const plainTextAad = 'meta'
 const encryptedData = {"iv":"RH9i_J861XN7qvgHYZ86ag","ciphertext":"qkrkiw","tag":"kqfdLgy8qopnzeKmC5JwQA"}
 const encryptedDataWithAad = {"iv":"zrXJWOthT2tnFErPhWCrfw","ciphertext":"JWwKBg","tag":"txl7BQK4fxEP5cie2OQEZA","aad":"bWV0YQ"}
 const signedData = 'MEQCIAIqNr8-7Pozi1D-cigvEKbkP5SpKezzEEDSqM9McIV1AiBd4gioW8njOpr29Ymrvjp46q7hA7lSOjAJpdi5TjHWsg'
+const ecThumbprint = '45BLsBiWcghaEf_NF70Gf5oQcYLHaAtks0C48tT5SJ4'
+const rsaThumbprint = 'fXSFPtseA8Q5nzSGuHhj5mHyNCGYUmznTbqEV-oo0Fc'
+const symThumbprint = '25BH4hLm8A-gw20EHx8QvfDRCt3hKhFRYz9E_2Tge2c'
 
 /**
  * Tests
@@ -100,8 +109,10 @@ describe('JWK', () => {
       jwk.kid.should.equal('2')
     })
 
-    it('should throw if kid is not present on data or options', () => {
-      expect(() => new JWK(ECPublicJWKNoKid, {})).to.throw('Valid \'kid\' required for JWK')
+    it('should assign key thumbprint as kid if not present on data or options', () => {
+      let jwk = new JWK(ECPublicJWKNoKid)
+      console.log(jwk)
+      jwk.kid.should.equal(ecThumbprint)
     })
 
     it('should copy non-standard key metadata', () => {
@@ -249,6 +260,40 @@ describe('JWK', () => {
         let { ciphertext, iv, tag, aad } = encryptedDataWithAad
         return jwk.decrypt(ciphertext, iv, tag, aad).should.eventually.equal(plainTextData)
       })
+    })
+  })
+
+  describe('thumbprint', () => {
+    let ec, rsa, sym, kty, inv
+
+    before(() => {
+      return Promise.all([
+        JWK.importKey(ECPublicJWK).then(key => ec = key),
+        JWK.importKey(RSAPublicJWK).then(key => rsa = key),
+        JWK.importKey(A256GCMJWK).then(key => sym = key),
+        Promise.resolve(new JWK(ECPublicJWKNoKty)).then(key => kty = key),
+        Promise.resolve(new JWK(ECPublicJWKInvalidKty)).then(key => inv = key)
+      ])
+    })
+
+    it('should produce a thumbprint for RSA keys', () => {
+      rsa.thumbprint().should.equal(rsaThumbprint)
+    })
+
+    it('should produce a thumbprint for EC keys', () => {
+      ec.thumbprint().should.equal(ecThumbprint)
+    })
+
+    it('should produce a thumbprint for symmetric keys', () => {
+      sym.thumbprint().should.equal(symThumbprint)
+    })
+
+    it('should throw if the JWK does not have a kty', () => {
+      expect(() => kty.thumbprint()).to.throw('Invalid \'kty\'')
+    })
+
+    it('should throw if the kty is not valid', () => {
+      expect(() => inv.thumbprint()).to.throw('Invalid \'kty\'')
     })
   })
 })
