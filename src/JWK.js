@@ -4,7 +4,7 @@
  * Dependencies
  * @ignore
  */
-const crypto = require('crypto')
+const crypto = require('@trust/webcrypto')
 const base64url = require('base64url')
 const { JWA } = require('@trust/jwa')
 
@@ -71,7 +71,7 @@ class JWK {
     }
 
     if (!this.kid) {
-      this.kid = this.thumbprint()
+      throw new DataError('Valid \'kid\' required for JWK')
     }
   }
 
@@ -87,8 +87,18 @@ class JWK {
    */
   static importKey (data, options) {
     return Promise.resolve()
+
+      // Calculate Thumbprint
+      .then(() => this.thumbprint(data))
+
       // Create instance
-      .then(() => new JWK(data, options))
+      .then(hash => {
+        if (hash && !data.kid && !(options && options.kid)) {
+          data.kid = hash
+        }
+
+        return new JWK(data, options)
+      })
 
       // Import CryptoKey and assign to JWK
       .then(jwk => JWA.importKey(jwk).then(({ cryptoKey }) => {
@@ -113,12 +123,22 @@ class JWK {
    * @return {Promise.<JWK>} A promise that resolves the JWK instance.
    */
   static fromCryptoKey (key, options) {
+    let rawJwk
+
     // Export JWK
     return JWA.exportKey('jwk', key)
+      .then(data => {
+        rawJwk = data
+        return this.thumbprint(rawJwk)
+      })
 
       // Create JWK instance and assign CryptoKey
-      .then(data => {
-        let jwk = new JWK(data, options)
+      .then(hash => {
+        if (!rawJwk.kid && !(options && options.kid)) {
+          rawJwk.kid = hash
+        }
+
+        let jwk = new JWK(rawJwk, options)
 
         Object.defineProperty(jwk, 'cryptoKey', {
           value: key,
@@ -128,6 +148,54 @@ class JWK {
 
         return jwk
       })
+  }
+
+  /**
+   * thumbprint
+   *
+   * @description
+   * Calculate the SHA-256 JWK Thumbprint according to [RFC7638]{@link https://tools.ietf.org/html/rfc7638}.
+   * This method is used to create a unique `kid` if none is specified.
+   *
+   * @example <caption>SHA-256 Thumbprint</caption>
+   * JWK.thumbprint(jwk)
+   *   .then(console.log)
+   * //
+   * // (line breaks for display only)
+   * //
+   * // => "45BLsBiWcghaEf_NF70Gf5oQcYLHaA
+   * //     tks0C48tT5SJ4"
+   *
+   * @param  {Object} jwk
+   * @return {Promise.<String>} A promise that resolves the JWK Thumbprint String.
+   */
+  static thumbprint (jwk) {
+    let { kty } = jwk
+    let data
+
+    // RSA JWK Thumbprint Fields
+    if (kty === 'RSA') {
+      let { e, n } = jwk
+      data = { e, kty, n }
+
+    // ECDSA JWK Thumbprint Fields
+    } else if (kty === 'EC') {
+      let { crv, x, y } = jwk
+      data = { crv, kty, x, y }
+
+    // Symmetric JWK Thumbprint Fields
+    } else if (kty === 'oct') {
+      let { k } = jwk
+      data = { k, kty }
+
+    // Invalid kty
+    } else {
+      return Promise.reject(new DataError('Invalid \'kty\''))
+    }
+
+    let json = JSON.stringify(data)
+    return crypto.subtle.digest({ name: 'SHA-256' }, json)
+      .then(hash => base64url(hash))
   }
 
   /**
@@ -243,37 +311,10 @@ class JWK {
    * // => "45BLsBiWcghaEf_NF70Gf5oQcYLHaA
    * //     tks0C48tT5SJ4"
    *
-   * @return {String} JWK Thumbprint String
+   * @return {Promise.<String>} A promise that resolves the JWK Thumbprint String.
    */
   thumbprint () {
-    let { kty } = this
-    let data
-
-    // RSA JWK Thumbprint Fields
-    if (kty === 'RSA') {
-      let { e, n } = this
-      data = { e, kty, n }
-
-    // ECDSA JWK Thumbprint Fields
-    } else if (kty === 'EC') {
-      let { crv, x, y } = this
-      data = { crv, kty, x, y }
-
-    // Symmetric JWK Thumbprint Fields
-    } else if (kty === 'oct') {
-      let { k } = this
-      data = { k, kty }
-
-    // Invalid kty
-    } else {
-      throw new DataError('Invalid \'kty\'')
-    }
-
-    let hash = crypto.createHash('sha256')
-    let json = JSON.stringify(data)
-
-    hash.update(json)
-    return base64url(hash.digest())
+    return JWK.thumbprint(this)
   }
 
   /**
