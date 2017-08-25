@@ -4,9 +4,9 @@
   "description": "JSON Web Key for JavaScript",
   "main": "src/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/nyc ./node_modules/.bin/_mocha test",
-    "jsdoc": "./node_modules/.bin/jsdoc -c jsdoc.json -r",
-    "coverage": "./node_modules/.bin/nyc --reporter=lcov ./node_modules/.bin/_mocha test"
+    "test": "nyc _mocha test",
+    "jsdoc": "jsdoc -c jsdoc.json -r",
+    "coverage": "nyc --reporter=lcov _mocha test"
   },
   "repository": {
     "type": "git",
