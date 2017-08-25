@@ -319,29 +319,29 @@ class JWK {
   }
 
   /**
-   * generateProtected
+   * getProtectedHeader
    *
    * @description
    * Use key metadata to generate a JWS protected header object.
    *
    * @example <caption>Basic JWS Header with JWC</caption>
-   * jwk.generateProtected({ jwc: 'base64url encoded compact jwc' })
+   * jwk.getProtectedHeader({ jwc: 'base64url encoded compact jwc' })
    * // => { alg: 'RS256',
    * //      kid: 'abcd123$',
    * //      jwc: 'base64url encoded compact jwc' }
    *
    * @example <caption>Basic JWS Header with JKU</caption>
-   * jwk.generateProtected({ jku: 'https://example.com/jwks' })
+   * jwk.getProtectedHeader({ jku: 'https://example.com/jwks' })
    * // => { alg: 'RS256',
    * //      kid: 'abcd123$',
    * //      jku: 'https://example.com/jwks' }
    *
-   * @param  {Object} props - Additional properties to include in header.
+   * @param  {Object} params - Additional properties to include in header.
    * @return {Object} JWS Header
    */
-  generateProtected (props) {
+  getProtectedHeader (params) {
     let { alg, kid, key_ops, use } = this
-    let header = Object.assign({}, { alg, kid }, props)
+    let header = Object.assign({}, { alg, kid }, params)
 
     // Check key_ops or use
     if (!(Array.isArray(key_ops) && key_ops.includes('sign')) && !(use && use === 'sig')) {
