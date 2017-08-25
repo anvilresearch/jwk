@@ -111,7 +111,6 @@ describe('JWK', () => {
 
     it('should assign key thumbprint as kid if not present on data or options', () => {
       let jwk = new JWK(ECPublicJWKNoKid)
-      console.log(jwk)
       jwk.kid.should.equal(ecThumbprint)
     })
 
