@@ -4,9 +4,9 @@
   "description": "JSON Web Key for JavaScript",
   "main": "src/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/_mocha test -w",
+    "test": "./node_modules/.bin/nyc ./node_modules/.bin/_mocha test",
     "jsdoc": "./node_modules/.bin/jsdoc -c jsdoc.json -r",
-    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- test"
+    "coverage": "./node_modules/.bin/nyc --reporter=lcov ./node_modules/.bin/_mocha test"
   },
   "repository": {
     "type": "git",
@@ -42,10 +42,10 @@
     "chai": "^4.1.1",
     "chai-as-promised": "^7.1.1",
     "codecov": "^2.3.0",
-    "istanbul": "^0.4.5",
     "jsdoc": "^3.5.4",
     "mocha": "^3.5.0",
     "nock": "^9.0.14",
+    "nyc": "^11.1.0",
     "sinon": "^2.1.0",
     "sinon-chai": "^2.12.0"
   },
