@@ -4,6 +4,8 @@
  * Dependencies
  * @ignore
  */
+const crypto = require('crypto')
+const base64url = require('base64url')
 const { JWA } = require('@trust/jwa')
 
 /**
@@ -69,7 +71,7 @@ class JWK {
     }
 
     if (!this.kid) {
-      throw new DataError('Valid \'kid\' required for JWK')
+      this.kid = this.thumbprint()
     }
   }
 
@@ -224,6 +226,54 @@ class JWK {
   decrypt (ciphertext, iv, tag, aad) {
     let { alg, cryptoKey } = this
     return JWA.decrypt(alg, cryptoKey, ciphertext, iv, tag, aad)
+  }
+
+  /**
+   * thumbprint
+   *
+   * @description
+   * Calculate the SHA-256 JWK Thumbprint according to [RFC7638]{@link https://tools.ietf.org/html/rfc7638}.
+   * This method is used to create a unique `kid` if none is specified.
+   *
+   * @example <caption>SHA-256 Thumbprint</caption>
+   * jwk.thumbprint()
+   * //
+   * // (line breaks for display only)
+   * //
+   * // => "45BLsBiWcghaEf_NF70Gf5oQcYLHaA
+   * //     tks0C48tT5SJ4"
+   *
+   * @return {String} JWK Thumbprint String
+   */
+  thumbprint () {
+    let { kty } = this
+    let data
+
+    // RSA JWK Thumbprint Fields
+    if (kty === 'RSA') {
+      let { e, n } = this
+      data = { e, kty, n }
+
+    // ECDSA JWK Thumbprint Fields
+    } else if (kty === 'EC') {
+      let { crv, x, y } = this
+      data = { crv, kty, x, y }
+
+    // Symmetric JWK Thumbprint Fields
+    } else if (kty === 'oct') {
+      let { k } = this
+      data = { k, kty }
+
+    // Invalid kty
+    } else {
+      throw new DataError('Invalid \'kty\'')
+    }
+
+    let hash = crypto.createHash('sha256')
+    let json = JSON.stringify(data)
+
+    hash.update(json)
+    return base64url(hash.digest())
   }
 }
 
