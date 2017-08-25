@@ -305,6 +305,7 @@ class JWK {
    *
    * @example <caption>SHA-256 Thumbprint</caption>
    * jwk.thumbprint()
+   *   .then(console.log)
    * //
    * // (line breaks for display only)
    * //
