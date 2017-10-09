@@ -372,19 +372,14 @@ describe('JWK', () => {
         .kid.should.equal(ec.kid)
     })
 
-    it('should throw if \'kid\' is omitted', () => {
-      expect(() => noKid.getProtectedHeader(jkuParams)).to.throw('\'kid\' is required')
-    })
-
-    it('should contain a \'jku\' or a \'jwc\'', () => {
+    it('should include \'kid\' with jku', () => {
       ec.getProtectedHeader(jkuParams)
-        .jku.should.equal(jkuParams.jku)
-      ec.getProtectedHeader(jwcParams)
-        .jwc.should.equal(jwcParams.jwc)
+        .should.haveOwnProperty('kid')
     })
 
-    it('should throw if \'jku\' and \'jwc\' are omitted', () => {
-      expect(() => ec.getProtectedHeader()).to.throw('Either \'jku\' or \'jwc\' is required')
+    it('should not include \'kid\' with \'jwc\'', () => {
+      ec.getProtectedHeader(jwcParams)
+        .should.not.haveOwnProperty('kid')
     })
   })
 })
