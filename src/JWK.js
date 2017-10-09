@@ -358,10 +358,6 @@ class JWK {
       throw new DataError('\'alg\' is required')
     }
 
-    if (!header.kid) {
-      throw new DataError('\'kid\' is required')
-    }
-
     return header
   }
 }
