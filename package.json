@@ -1,6 +1,6 @@
 {
   "name": "@trust/jwk",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "JSON Web Key for JavaScript",
   "main": "src/index.js",
   "scripts": {
