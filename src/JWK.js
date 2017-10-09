@@ -341,16 +341,16 @@ class JWK {
    */
   getProtectedHeader (params) {
     let { alg, kid, key_ops, use } = this
-    let header = Object.assign({ alg }, params)
+    let header = Object.assign({ alg, kid }, params)
 
     // Check key_ops or use
     if (!(Array.isArray(key_ops) && key_ops.includes('sign')) && !(use && use === 'sig')) {
       throw new DataError('Invalid key usage option')
     }
 
-    // Include `kid` in combination with `jku`
-    if (header.jku) {
-      header.kid = kid
+    // Remove `kid` when using `jwc`
+    if (header.jwc) {
+      delete header.kid
     }
 
     // Check for mandatory properties
